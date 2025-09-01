@@ -8,11 +8,24 @@ using Interpolations: linear_interpolation
 
 include("calibrations.jl")
 
+"""
+`LuminosityFunction{T}` is the abstract supertype for luminosity functions that can be used to model the TRGB. Subtypes should implement [`ψ`](@ref).
+"""
 abstract type LuminosityFunction{T} end
 (l::LuminosityFunction)(m) = ψ(l, m)
 Base.Broadcast.broadcastable(t::LuminosityFunction) = Ref(t)
+"""
+    ψ(model::LuminosityFunction, m)
+Returns the luminosity function of the `model` at magnitude `m`.
+"""
+function ψ end
 
+"""
+    BrokenPowerLaw(m_trgb, a, b, c) <: LuminosityFunction
+Standard broken power-law luminosity function typically used to model the luminosity function of the TRGB. For a magnitude `m`, the luminosity function is `exp10(a * (m - m_trgb) + b)` for `m >= m_trgb` and `exp10(c * (m - m_trgb))` for `m < m_trgb`. Therefore `a` is the power-law slope of the RGB, `b` is the RGB bump, and `c` is the power-law slope of the AGB region.
 
+For initial optimization conditions, eyeballing an approximate `m_trgb` on the CMD is usually sufficient. `a = 0.3, b = 0.2, and c = 0.1` may be used as first guesses, but should be revised to match your data more closely.
+"""
 struct BrokenPowerLaw{T} <: LuminosityFunction{T}
     m_trgb::T
     a::T
@@ -46,6 +59,13 @@ function ϕ2(limits, b::LuminosityFunction, err_func, complete_func, bias_func)
     # return trapz((x,y), [transformed_ϕ_integrand([i,j], b, err_func, complete_func, bias_func) for i=x,j=y])
 end
 
+"""
+    LuminosityFunctionData(model, mags,
+                           err_func, complete_func, bias_func)
+Structure to hold data for optimizing the given `model`. `mags` should typically be an array of apparent magnitudes with reddening correction applied. `err_func(m)` must return the photometric error at magnitude `m`, while `complete_func(m)` and `bias_func(m)` return the photometric completeness and bias (defined as <measured> - <input>), respectively.
+
+When called with a vector of parameters `θ`, returns the negative logarithm of the likelihood (Equation 7 in Makarov+2006). This enables convenient optimization calls as most optimization routines will minimize an objective. For example, to optimize with the Nelder-Mead algorithm of Optim.jl, call `result = Optim.optimize(LuminosityFunctionData(...), x0, Optim.NelderMead())`. The maximum likelihood values are then `Optim.minimizer(result)`.
+"""
 struct LuminosityFunctionData{T,A,B,C,D}
     model::T # Can be a LuminosityFunction, or an alternative constructor (for fixed values)
     mags::A
@@ -68,7 +88,10 @@ function (fit::LuminosityFunctionData)(θ)
     return -sum(log(ϕ(m, model, fit.err_func, fit.complete_func, fit.bias_func)) for m in fit.mags) + length(fit.mags) * log(ϕ2(extrema(fit.mags), model, fit.err_func, fit.complete_func, fit.bias_func))
 end
 
-
+"""
+    filter_mags(colors, mags, ridge_colors, ridge_mags, func)
+Returns indices into `colors` and `mags` of stars that fall within range of a ridgeline defined by `ridge_colors` and `ridge_mags`. The selection region is defined by the callable `func(m)` for magnitude `m` which must return a width. A star is accepted if its color falls between `± func(m)` of the ridgeline. 
+"""
 function filter_mags(colors, mags, ridge_colors, ridge_mags, func)
     pidx = sortperm(ridge_mags)
     ridge_colors, ridge_mags = ridge_colors[pidx], ridge_mags[pidx]
