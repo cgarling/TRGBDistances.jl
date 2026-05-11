@@ -152,7 +152,7 @@ A [`TRGBFitResult`](@ref).
 # Examples
 
 ```jldoctest
-julia> using TRGBDistances: exp_photerr, Martin2016_complete, fit, observe, BrokenPowerLaw, TRGBFitResult
+julia> using TRGBDistances: exp_photerr, Martin2016_complete, fit, observe, BrokenPowerLaw, TRGBFitResult, OptimJL
 
 julia> using Optim
 
