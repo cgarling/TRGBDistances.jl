@@ -54,6 +54,33 @@ end
 KissMCMCJL(; nsamples=10_000, nburnin=1_000, nthin=1, nchain=1) =
     KissMCMCJL(nsamples, nburnin, nthin, nchain)
 
+"""
+    DynamicHMCJL(; nsamples=1000, n_warmup=500, ad=ForwardDiffAD())
+
+Backend for posterior sampling using Hamiltonian Monte Carlo via
+[DynamicHMC.jl](https://github.com/tpapp/DynamicHMC.jl).
+Requires `using DynamicHMC, LogDensityProblems` (loads the
+`TRGBDistancesDynamicHMCExt` extension).
+
+Gradient computation is required and is handled by the `ad` backend:
+- [`ForwardDiffAD()`](@ref) (default): requires `using ForwardDiff`.
+- [`ZygoteAD()`](@ref): requires `using Zygote`.
+
+# Example
+```julia
+using DynamicHMC, LogDensityProblems, ForwardDiff
+chain = sample(BrokenPowerLaw, mags, err, compl, bias, x0;
+               prior=prior, backend=DynamicHMCJL(nsamples=1000, ad=ForwardDiffAD()))
+```
+"""
+struct DynamicHMCJL <: AbstractSamplerBackend
+    nsamples::Int
+    n_warmup::Int
+    ad::Union{ADTypes.AbstractADType,Nothing}
+end
+DynamicHMCJL(; nsamples=1000, n_warmup=500, ad=ADTypes.AutoForwardDiff()) =
+    DynamicHMCJL(nsamples, n_warmup, ad)
+
 # -----------------------------------------------------------------------
 # sample() — public API
 # -----------------------------------------------------------------------
@@ -84,7 +111,9 @@ Sample from the posterior of a [`LuminosityFunction`](@ref) model given observed
 A [`TRGBChain`](@ref).
 """
 function sample(model_factory, mags, err_func, complete_func, bias_func, x0;
-                backend=KissMCMCJL(), prior=nothing, int_width=1.0, quad=:adaptive, kwargs...)
+                backend=KissMCMCJL(), prior=nothing, int_width=1.0, kwargs...)
+    # Use fixed quadrature when an AD backend is present (adaptive is not differentiable).
+    quad = (hasproperty(backend, :ad) && !isnothing(backend.ad)) ? :fixed : :adaptive
     objective = _build_objective(model_factory, mags, err_func, complete_func, bias_func, prior, int_width; quad)
     logposterior = θ -> -objective(θ)
     return _sample(backend, logposterior, x0; kwargs...)

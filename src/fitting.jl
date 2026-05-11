@@ -1,3 +1,47 @@
+# -----------------------------------------------------------------------
+# AD backend types
+# -----------------------------------------------------------------------
+
+"""
+    build_gradient(ad::ADTypes.AbstractADType, f) -> (g, g!)
+
+Build gradient callables for the scalar function `f : Rⁿ → R`.
+Returns a tuple `(g, g!)` where:
+- `g(x)` returns the gradient as a new `Vector`.
+- `g!(G, x)` writes the gradient in-place to `G`.
+
+Requires the corresponding AD package to be loaded:
+- `ADTypes.AutoForwardDiff`: `using ForwardDiff`
+- `ADTypes.AutoZygote`: `using Zygote`
+"""
+function build_gradient(ad::ADTypes.AbstractADType, f)
+    error("AD backend $(typeof(ad)) requires loading the corresponding package. " *
+          "For ForwardDiffAD(), use `using ForwardDiff`. " *
+          "For ZygoteAD(), use `using Zygote`.")
+end
+
+"""
+    build_hessian(ad::ADTypes.AbstractADType, f) -> (h, h!)
+
+Build Hessian callables for the scalar function `f : Rⁿ → R`.
+Returns a tuple `(h, h!)` where:
+- `h(x)` returns the Hessian as a new `Matrix`.
+- `h!(H, x)` writes the Hessian in-place to `H`.
+
+Requires the corresponding AD package to be loaded:
+- `ADTypes.AutoForwardDiff`: `using ForwardDiff`
+- `ADTypes.AutoZygote`: `using Zygote`
+"""
+function build_hessian(ad::ADTypes.AbstractADType, f)
+    error("AD backend $(typeof(ad)) requires loading the corresponding package. " *
+          "For ForwardDiffAD(), use `using ForwardDiff`. " *
+          "For ZygoteAD(), use `using Zygote`.")
+end
+
+# -----------------------------------------------------------------------
+# Optimizer backend
+# -----------------------------------------------------------------------
+
 """
     AbstractOptimizerBackend
 
@@ -92,30 +136,38 @@ end
 # -----------------------------------------------------------------------
 
 """
-    OptimJL(; method=nothing, options=nothing, autodiff=nothing)
+    OptimJL(; method=nothing, options=nothing, ad=nothing)
 
 Backend for optimization using [Optim.jl](https://github.com/JuliaNLSolvers/Optim.jl).
-Requires the `Optim` package to be loaded (via the `TRGBDistancesOptimExt` extension).
+Requires `using Optim` (loads the `TRGBDistancesOptimExt` extension).
 
-`method` defaults to `Optim.NelderMead()`.
+`method` defaults to `Optim.NelderMead()` (derivative-free).
 
-`autodiff` can be set to an `ADTypes.jl` autodiff type (e.g. `ADTypes.AutoForwardDiff()`)
-to enable automatic differentiation for gradient-based methods. When both `Optim` and
-`ForwardDiff` are loaded, the `TRGBDistancesOptimForwardDiffExt` extension automatically
-uses `AutoForwardDiff` for first-order methods when `autodiff` is `nothing`.
+`ad` selects the automatic differentiation backend for gradient-based and second-order
+methods. Set it to an `ADTypes.AbstractADType` instance:
+- `ADTypes.AutoForwardDiff`: requires `using ForwardDiff`
+- `ADTypes.AutoZygote`: requires `using Zygote`
+- `nothing` (default) — derivative-free methods only
 
-# Example
+# Examples
 ```julia
-using Optim
-result = fit(BrokenPowerLaw, mags, err, compl, bias, x0; backend=OptimJL())
+using Optim, ForwardDiff, ADTypes
+# Derivative-free (NelderMead):
+result = fit(BrokenPowerLaw, mags, err, compl, bias, x0)
+# First-order (BFGS) with ForwardDiff gradients:
+result = fit(BrokenPowerLaw, mags, err, compl, bias, x0;
+             backend=OptimJL(method=Optim.BFGS(), ad=ADTypes.AutoForwardDiff()))
+# Second-order (Newton trust region) with ForwardDiff:
+result = fit(BrokenPowerLaw, mags, err, compl, bias, x0;
+             backend=OptimJL(method=Optim.NewtonTrustRegion(), ad=ADTypes.AutoForwardDiff()))
 ```
 """
-struct OptimJL{M,O,A} <: AbstractOptimizerBackend
+struct OptimJL{M,O} <: AbstractOptimizerBackend
     method::M
     options::O
-    autodiff::A
+    ad::Union{ADTypes.AbstractADType,Nothing}
 end
-OptimJL(; method=nothing, options=nothing, autodiff=nothing) = OptimJL(method, options, autodiff)
+OptimJL(; method=nothing, options=nothing, ad=nothing) = OptimJL(method, options, ad)
 
 # -----------------------------------------------------------------------
 # fit() — public API
@@ -156,7 +208,11 @@ julia> using TRGBDistances: exp_photerr, Martin2016_complete, fit, observe, Brok
 
 julia> using Optim
 
+julia> using ForwardDiff
+
 julia> using StableRNGs: StableRNG
+
+julia> import ADTypes
 
 julia> err_func(x) = exp_photerr(x, 1.05, 10.0, 32.0, 0.01);
 
@@ -175,20 +231,23 @@ julia> result = fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0
 julia> result isa TRGBFitResult
 true
 
-julia> result = fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0; backend=OptimJL(method=Optim.BFGS())); # Use BFGS with autodifferentiation
+julia> result = fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0; backend=OptimJL(method=Optim.BFGS(), ad=ADTypes.AutoForwardDiff())); # BFGS with ForwardDiff gradients
 
 julia> result isa TRGBFitResult
 true
 ```
 """
 function fit(model_factory, mags, err_func, complete_func, bias_func, x0;
-             backend=OptimJL(), prior=nothing, int_width=1.0, quad=:adaptive, kwargs...)
+             backend=OptimJL(), prior=nothing, int_width=1.0, kwargs...)
+    # Use fixed (AD-compatible) quadrature when an AD backend is provided;
+    # adaptive quadrature is more accurate but not differentiable.
+    quad = (hasproperty(backend, :ad) && !isnothing(backend.ad)) ? :fixed : :adaptive
     objective = _build_objective(model_factory, mags, err_func, complete_func, bias_func, prior, int_width; quad)
-    return _fit(backend, model_factory, mags, err_func, complete_func, bias_func, x0, prior, int_width, quad, objective; kwargs...)
+    return _fit(backend, objective, x0; kwargs...)
 end
 
 # Generic fallback for unloaded backends
-function _fit(backend::AbstractOptimizerBackend, model_factory, mags, err_func, complete_func, bias_func, x0, prior, int_width, quad, objective; kwargs...)
+function _fit(backend::AbstractOptimizerBackend, objective, x0; kwargs...)
     error("Backend $(typeof(backend)) requires loading the corresponding package. " *
           "For OptimJL, use `using Optim`.")
 end

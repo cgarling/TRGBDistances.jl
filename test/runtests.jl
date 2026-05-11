@@ -1,3 +1,4 @@
+using ADTypes: AutoForwardDiff, AutoZygote
 using TRGBDistances
 using TRGBDistances: fit  # disambiguate from StatsAPI/Distributions
 using TRGBDistances: exp_photerr, Martin2016_complete
@@ -8,7 +9,7 @@ using StableRNGs: StableRNG
 
 # Run doctests first
 using Documenter: DocMeta, doctest
-DocMeta.setdocmeta!(TRGBDistances, :DocTestSetup, :(using TRGBDistances); recursive=true)
+DocMeta.setdocmeta!(TRGBDistances, :DocTestSetup, :(using TRGBDistances, Optim, ForwardDiff); recursive=true)
 doctest(TRGBDistances)
 
 # -----------------------------------------------------------------------
@@ -177,6 +178,108 @@ const bias_func     = m -> 0.0
         cal = TRGBDistances.Rizzi2007(1.5, :ACS, :F814W, :F606W)
         @test cal ≈ -4.006 atol=1e-3
         @test_throws ArgumentError TRGBDistances.Rizzi2007(1.5, :ACS, :F814W, :F435W)
+    end
+
+    # -------------------------------------------------------------------
+    @testset "AD backends — build_gradient / build_hessian" begin
+        using ForwardDiff: ForwardDiff
+        using Zygote: Zygote
+        using LinearAlgebra: I
+        f  = x -> sum(x .^ 2)
+        x  = [1.0, 2.0, 3.0]
+
+        @testset "ForwardDiff" begin
+            g, g! = build_gradient(AutoForwardDiff(), f)
+            @test g(x) ≈ 2 .* x
+            G = zeros(3)
+            g!(G, x)
+            @test G ≈ 2 .* x
+
+            h, h! = build_hessian(AutoForwardDiff(), f)
+            @test h(x) ≈ 2 * Matrix(I, 3, 3)
+            H = zeros(3, 3)
+            h!(H, x)
+            @test H ≈ 2 * Matrix(I, 3, 3)
+        end
+
+        @testset "Zygote" begin
+            g, g! = build_gradient(AutoForwardDiff(), f)
+            @test g(x) ≈ 2 .* x
+            G = zeros(3)
+            g!(G, x)
+            @test G ≈ 2 .* x
+        end
+    end
+
+    # -------------------------------------------------------------------
+    @testset "fit API — first/second-order with ForwardDiff" begin
+        using Optim: Optim
+        using ForwardDiff: ForwardDiff
+        model_true = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
+        rng  = StableRNG(1234)
+        mags = observe(rng, model_true, 500;
+                       err_func=err_func, complete_func=complete_func, bias_func=bias_func)
+        x0 = [24.2, 0.3, 0.2, 0.1]
+
+        r_bfgs = TRGBDistances.fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0;
+                                   backend=OptimJL(method=Optim.BFGS(), ad=AutoForwardDiff()))
+        @test r_bfgs isa TRGBFitResult
+        @test r_bfgs.converged
+        @test isfinite(r_bfgs.minimum)
+
+        r_newton = TRGBDistances.fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0;
+                                     backend=OptimJL(method=Optim.NewtonTrustRegion(), ad=AutoForwardDiff()))
+        @test r_newton isa TRGBFitResult
+        @test r_newton.converged
+        @test isfinite(r_newton.minimum)
+    end
+
+    # -------------------------------------------------------------------
+    @testset "fit API — first/second-order with Zygote" begin
+        using Optim: Optim
+        using Zygote: Zygote
+        model_true = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
+        rng  = StableRNG(1234)
+        mags = observe(rng, model_true, 500;
+                       err_func=err_func, complete_func=complete_func, bias_func=bias_func)
+        x0 = [24.2, 0.3, 0.2, 0.1]
+
+        r_bfgs = TRGBDistances.fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0;
+                                   backend=OptimJL(method=Optim.BFGS(), ad=AutoZygote()))
+        @test r_bfgs isa TRGBFitResult
+        @test r_bfgs.converged
+        @test isfinite(r_bfgs.minimum)
+
+        # r_newton = TRGBDistances.fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0;
+        #                              backend=OptimJL(method=Optim.NewtonTrustRegion(), ad=AutoZygote()))
+        # @test r_newton isa TRGBFitResult
+        # @test r_newton.converged
+        # @test isfinite(r_newton.minimum)
+    end
+
+    # -------------------------------------------------------------------
+    # This is pretty slow, but leaving it for now (could reduce samples, warmup, etc)
+    @testset "sample API — DynamicHMCJL backend" begin
+        using DynamicHMC: DynamicHMC
+        using LogDensityProblems: LogDensityProblems
+        using ForwardDiff: ForwardDiff
+        using Distributions
+        model_true = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
+        rng  = StableRNG(1234)
+        mags = observe(rng, model_true, 300;
+                       err_func=err_func, complete_func=complete_func, bias_func=bias_func)
+        x0    = [24.0, 0.3, 0.2, 0.1]
+        prior = (Normal(24.0, 0.5), nothing, nothing, nothing)
+        chain = TRGBDistances.sample(
+            BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0;
+            backend=DynamicHMCJL(nsamples=200, n_warmup=100, ad=AutoForwardDiff()),
+            prior=prior, rng=StableRNG(1234),
+        )
+        @test chain isa TRGBChain
+        @test size(chain.samples, 1) == 4    # n_params
+        @test size(chain.samples, 2) == 200  # nsamples
+        @test length(chain.logprob) == 200
+        @test 0 <= chain.acceptance_fraction <= 1
     end
 
 end

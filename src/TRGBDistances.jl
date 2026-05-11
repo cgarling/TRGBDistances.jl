@@ -1,5 +1,6 @@
 module TRGBDistances
 
+import ADTypes
 using Distributions: logpdf, cdf, Normal
 using QuadGK: quadgk
 using Interpolations: linear_interpolation
@@ -19,7 +20,8 @@ export BrokenPowerLaw
 export ϕ, ϕ_norm, loglikelihood
 export TRGBFitResult, fit, OptimJL
 export AbstractOptimizerBackend, AbstractSamplerBackend
-export TRGBChain, sample, KissMCMCJL
+export TRGBChain, sample, KissMCMCJL, DynamicHMCJL
+export build_gradient, build_hessian
 export logprior
 export observe, cdf_bpl
 export filter_mags
