@@ -84,8 +84,8 @@ Sample from the posterior of a [`LuminosityFunction`](@ref) model given observed
 A [`TRGBChain`](@ref).
 """
 function sample(model_factory, mags, err_func, complete_func, bias_func, x0;
-                backend=KissMCMCJL(), prior=nothing, int_width=1.0, kwargs...)
-    objective = _build_objective(model_factory, mags, err_func, complete_func, bias_func, prior, int_width)
+                backend=KissMCMCJL(), prior=nothing, int_width=1.0, quad=:adaptive, kwargs...)
+    objective = _build_objective(model_factory, mags, err_func, complete_func, bias_func, prior, int_width; quad)
     logposterior = θ -> -objective(θ)
     return _sample(backend, logposterior, x0; kwargs...)
 end

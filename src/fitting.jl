@@ -77,10 +77,10 @@ end
 # Objective builder (negative log-posterior = NLL + negative log-prior)
 # -----------------------------------------------------------------------
 
-function _build_objective(model_factory, mags, err_func, complete_func, bias_func, prior, int_width)
+function _build_objective(model_factory, mags, err_func, complete_func, bias_func, prior, int_width; quad=:adaptive)
     function objective(θ)
         model = model_factory(θ...)
-        ll = loglikelihood(model, mags, err_func, complete_func, bias_func; int_width)
+        ll = loglikelihood(model, mags, err_func, complete_func, bias_func; int_width, quad)
         lp = logprior(prior, θ)
         return -(ll + lp)  # minimize negative log-posterior
     end
@@ -92,12 +92,17 @@ end
 # -----------------------------------------------------------------------
 
 """
-    OptimJL(; method=nothing, options=nothing)
+    OptimJL(; method=nothing, options=nothing, autodiff=nothing)
 
 Backend for optimization using [Optim.jl](https://github.com/JuliaNLSolvers/Optim.jl).
 Requires the `Optim` package to be loaded (via the `TRGBDistancesOptimExt` extension).
 
 `method` defaults to `Optim.NelderMead()`.
+
+`autodiff` can be set to an `ADTypes.jl` autodiff type (e.g. `ADTypes.AutoForwardDiff()`)
+to enable automatic differentiation for gradient-based methods. When both `Optim` and
+`ForwardDiff` are loaded, the `TRGBDistancesOptimForwardDiffExt` extension automatically
+uses `AutoForwardDiff` for first-order methods when `autodiff` is `nothing`.
 
 # Example
 ```julia
@@ -105,11 +110,12 @@ using Optim
 result = fit(BrokenPowerLaw, mags, err, compl, bias, x0; backend=OptimJL())
 ```
 """
-struct OptimJL{M,O} <: AbstractOptimizerBackend
+struct OptimJL{M,O,A} <: AbstractOptimizerBackend
     method::M
     options::O
+    autodiff::A
 end
-OptimJL(; method=nothing, options=nothing) = OptimJL(method, options)
+OptimJL(; method=nothing, options=nothing, autodiff=nothing) = OptimJL(method, options, autodiff)
 
 # -----------------------------------------------------------------------
 # fit() — public API
@@ -162,22 +168,27 @@ julia> model_true = BrokenPowerLaw(22.0, 0.3, 0.4, 0.1);
 
 julia> x0 = [22.2, 0.4, 0.3, 0.1];  # start near truth
 
-julia> mags = observe(StableRNG(42), model_true, 500; err_func, complete_func, bias_func);
+julia> mags = observe(StableRNG(42), model_true, 500; err_func, complete_func, bias_func, upper_limit=1.0); # 500 stars within 1 mag of the TRGB
 
-julia> result = fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0)
+julia> result = fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0); # Uses OptimJL(method=Optim.NelderMead()) by default
+
+julia> result isa TRGBFitResult
+true
+
+julia> result = fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0; backend=OptimJL(method=Optim.BFGS())); # Use BFGS with autodifferentiation
 
 julia> result isa TRGBFitResult
 true
 ```
 """
 function fit(model_factory, mags, err_func, complete_func, bias_func, x0;
-             backend=OptimJL(), prior=nothing, int_width=1.0, kwargs...)
-    objective = _build_objective(model_factory, mags, err_func, complete_func, bias_func, prior, int_width)
-    return _fit(backend, objective, x0; kwargs...)
+             backend=OptimJL(), prior=nothing, int_width=1.0, quad=:adaptive, kwargs...)
+    objective = _build_objective(model_factory, mags, err_func, complete_func, bias_func, prior, int_width; quad)
+    return _fit(backend, model_factory, mags, err_func, complete_func, bias_func, x0, prior, int_width, quad, objective; kwargs...)
 end
 
 # Generic fallback for unloaded backends
-function _fit(backend::AbstractOptimizerBackend, objective, x0; kwargs...)
+function _fit(backend::AbstractOptimizerBackend, model_factory, mags, err_func, complete_func, bias_func, x0, prior, int_width, quad, objective; kwargs...)
     error("Backend $(typeof(backend)) requires loading the corresponding package. " *
           "For OptimJL, use `using Optim`.")
 end
