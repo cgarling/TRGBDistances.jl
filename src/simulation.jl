@@ -137,11 +137,10 @@ end
 # -----------------------------------------------------------------------
 
 """
-    observe([rng,] model::LuminosityFunction, n::Integer; err_func, complete_func, bias_func)
+    observe([rng,] model::LuminosityFunction, n::Integer; err_func, complete_func, bias_func, upper_limit)
 
 Generate a synthetic catalog of `n` stars drawn from `model`, applying photometric
-incompleteness, bias, and scatter. Will return fewer than `n` stars when `complete_func`
-is < 1 over part of the magnitude range.
+incompleteness, bias, and scatter. Sampled stars will have magnitudes no larger than `m_trgb + upper_limit`.
 
 Stars are:
 1. Drawn from the luminosity function (depends on implemented `rand` methods for `model`).
@@ -149,6 +148,8 @@ Stars are:
 3. Shifted by `bias_func(m)` and scattered with standard deviation `err_func(m)`.
 
 Returns a `Vector{Float64}` of observed magnitudes.
+
+Requires a defined method for `rand(rng, model; upper_limit)` that samples from the luminosity function.
 
 # Example
 ```jldoctest
@@ -159,7 +160,7 @@ julia> compl(m) = m < 26.0 ? 1.0 : 0.0;
 julia> bias(m) = 0.0;
 
 julia> mags = observe(BrokenPowerLaw(24.0, 0.3, 0.2, 0.1), 1000; 
-                      err_func=err, complete_func=compl, bias_func=bias);
+                      err_func=err, complete_func=compl, bias_func=bias, upper_limit=10.0);
 
 julia> mags isa Vector{Float64}
 true

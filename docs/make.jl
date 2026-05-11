@@ -25,9 +25,6 @@ makedocs(;
         "Luminosity Function Modeling" => [
             "Theory" => "lf_modeling/theory.md",
         ],
-        "Developer Documentation" => [
-            "Makarov+2006 Audit" => "dev/makarov_audit.md",
-        ],
         "References" => "refs.md",
     ],
     doctest=false,
