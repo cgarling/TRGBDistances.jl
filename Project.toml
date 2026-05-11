@@ -19,14 +19,12 @@ ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 KissMCMC = "79d62d8d-4dfd-5781-bc85-ce78e0ac132a"
 LogDensityProblems = "6fdf6af0-433a-55f7-b3ed-c6c6e0b8df7c"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
-Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [extensions]
 TRGBDistancesDynamicHMCExt = ["DynamicHMC", "LogDensityProblems"]
 TRGBDistancesForwardDiffExt = "ForwardDiff"
 TRGBDistancesKissMCMCExt = "KissMCMC"
 TRGBDistancesOptimExt = "Optim"
-TRGBDistancesZygoteExt = "Zygote"
 
 [compat]
 ADTypes = "1.22.0"
@@ -37,13 +35,13 @@ ForwardDiff = "0.10, 1"
 Interpolations = "0.15, 0.16"
 IrrationalConstants = "0.2"
 KissMCMC = "0.2"
+LinearAlgebra = "1.12.0"
 LogDensityProblems = "0.6, 1, 2"
 Optim = "1, 2"
 QuadGK = "2"
 SpecialFunctions = "2"
 StableRNGs = "1"
 Statistics = "1"
-Zygote = "0.6, 0.7"
 julia = "1.9"
 
 [extras]
@@ -52,11 +50,11 @@ Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DynamicHMC = "bbc10e6e-7c05-544b-b16e-64fede858acb"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 KissMCMC = "79d62d8d-4dfd-5781-bc85-ce78e0ac132a"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LogDensityProblems = "6fdf6af0-433a-55f7-b3ed-c6c6e0b8df7c"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [targets]
-test = ["Test", "Documenter", "StableRNGs", "Optim", "KissMCMC", "ForwardDiff", "DynamicHMC", "LogDensityProblems", "Zygote"]
+test = ["Test", "Documenter", "StableRNGs", "Optim", "KissMCMC", "LinearAlgebra", "ForwardDiff", "DynamicHMC", "LogDensityProblems"]

@@ -5,7 +5,7 @@ module TRGBDistancesOptimExt
 #   - Derivative-free methods (NelderMead, etc.): no AD needed.
 #   - First-order methods (BFGS, etc.): calls build_gradient(backend.ad, f).
 #   - Second-order methods (Newton, etc.): calls build_gradient + build_hessian.
-# build_gradient / build_hessian are defined in the ForwardDiff or Zygote AD
+# build_gradient / build_hessian are defined in the AD
 # extensions, which must also be loaded for gradient-based methods.
 
 using TRGBDistances: TRGBDistances, OptimJL, TRGBFitResult, build_gradient, build_hessian

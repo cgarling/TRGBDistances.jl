@@ -1,4 +1,4 @@
-using ADTypes: AutoForwardDiff, AutoZygote
+using ADTypes: AutoForwardDiff
 using TRGBDistances
 using TRGBDistances: fit  # disambiguate from StatsAPI/Distributions
 using TRGBDistances: exp_photerr, Martin2016_complete
@@ -183,7 +183,6 @@ const bias_func     = m -> 0.0
     # -------------------------------------------------------------------
     @testset "AD backends — build_gradient / build_hessian" begin
         using ForwardDiff: ForwardDiff
-        using Zygote: Zygote
         using LinearAlgebra: I
         f  = x -> sum(x .^ 2)
         x  = [1.0, 2.0, 3.0]
@@ -200,14 +199,6 @@ const bias_func     = m -> 0.0
             H = zeros(3, 3)
             h!(H, x)
             @test H ≈ 2 * Matrix(I, 3, 3)
-        end
-
-        @testset "Zygote" begin
-            g, g! = build_gradient(AutoForwardDiff(), f)
-            @test g(x) ≈ 2 .* x
-            G = zeros(3)
-            g!(G, x)
-            @test G ≈ 2 .* x
         end
     end
 
@@ -232,29 +223,6 @@ const bias_func     = m -> 0.0
         @test r_newton isa TRGBFitResult
         @test r_newton.converged
         @test isfinite(r_newton.minimum)
-    end
-
-    # -------------------------------------------------------------------
-    @testset "fit API — first/second-order with Zygote" begin
-        using Optim: Optim
-        using Zygote: Zygote
-        model_true = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
-        rng  = StableRNG(1234)
-        mags = observe(rng, model_true, 500;
-                       err_func=err_func, complete_func=complete_func, bias_func=bias_func)
-        x0 = [24.2, 0.3, 0.2, 0.1]
-
-        r_bfgs = TRGBDistances.fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0;
-                                   backend=OptimJL(method=Optim.BFGS(), ad=AutoZygote()))
-        @test r_bfgs isa TRGBFitResult
-        @test r_bfgs.converged
-        @test isfinite(r_bfgs.minimum)
-
-        # r_newton = TRGBDistances.fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0;
-        #                              backend=OptimJL(method=Optim.NewtonTrustRegion(), ad=AutoZygote()))
-        # @test r_newton isa TRGBFitResult
-        # @test r_newton.converged
-        # @test isfinite(r_newton.minimum)
     end
 
     # -------------------------------------------------------------------

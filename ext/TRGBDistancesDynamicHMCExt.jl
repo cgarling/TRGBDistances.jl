@@ -3,7 +3,7 @@ module TRGBDistancesDynamicHMCExt
 # Loaded when DynamicHMC and LogDensityProblems are both available.
 # Provides HMC-based posterior sampling via _sample(::DynamicHMCJL, ...).
 # Gradient computation delegates to build_gradient(backend.ad, ...), which is
-# provided by TRGBDistancesForwardDiffExt or TRGBDistancesZygoteExt depending
+# provided by TRGBDistancesForwardDiffExt depending
 # on which AD package is loaded alongside DynamicHMC.
 
 using TRGBDistances: TRGBDistances, DynamicHMCJL, TRGBChain, build_gradient

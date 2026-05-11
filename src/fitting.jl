@@ -12,12 +12,10 @@ Returns a tuple `(g, g!)` where:
 
 Requires the corresponding AD package to be loaded:
 - `ADTypes.AutoForwardDiff`: `using ForwardDiff`
-- `ADTypes.AutoZygote`: `using Zygote`
 """
 function build_gradient(ad::ADTypes.AbstractADType, f)
     error("AD backend $(typeof(ad)) requires loading the corresponding package. " *
-          "For ForwardDiffAD(), use `using ForwardDiff`. " *
-          "For ZygoteAD(), use `using Zygote`.")
+          "For ADTypes.AutoForwardDiff(), use `using ForwardDiff`.")
 end
 
 """
@@ -30,12 +28,10 @@ Returns a tuple `(h, h!)` where:
 
 Requires the corresponding AD package to be loaded:
 - `ADTypes.AutoForwardDiff`: `using ForwardDiff`
-- `ADTypes.AutoZygote`: `using Zygote`
 """
 function build_hessian(ad::ADTypes.AbstractADType, f)
     error("AD backend $(typeof(ad)) requires loading the corresponding package. " *
-          "For ForwardDiffAD(), use `using ForwardDiff`. " *
-          "For ZygoteAD(), use `using Zygote`.")
+          "For ADTypes.AutoForwardDiff(), use `using ForwardDiff`. ")
 end
 
 # -----------------------------------------------------------------------
@@ -146,7 +142,6 @@ Requires `using Optim` (loads the `TRGBDistancesOptimExt` extension).
 `ad` selects the automatic differentiation backend for gradient-based and second-order
 methods. Set it to an `ADTypes.AbstractADType` instance:
 - `ADTypes.AutoForwardDiff`: requires `using ForwardDiff`
-- `ADTypes.AutoZygote`: requires `using Zygote`
 - `nothing` (default) — derivative-free methods only
 
 # Examples

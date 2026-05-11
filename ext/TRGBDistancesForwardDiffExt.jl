@@ -1,13 +1,13 @@
 module TRGBDistancesForwardDiffExt
 
 # Loaded when ForwardDiff is available.
-# Provides build_gradient and build_hessian for ForwardDiffAD().
+# Provides build_gradient and build_hessian for ADTypes.AutoForwardDiff
 # These are called by optimizer and sampler extensions that need derivative
 # information without coupling directly to ForwardDiff.
 
 import ADTypes
 import ForwardDiff
-using TRGBDistances: TRGBDistances, ForwardDiffAD
+using TRGBDistances: TRGBDistances
 import TRGBDistances: build_gradient, build_hessian
 
 """

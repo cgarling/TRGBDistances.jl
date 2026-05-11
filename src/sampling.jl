@@ -55,7 +55,7 @@ KissMCMCJL(; nsamples=10_000, nburnin=1_000, nthin=1, nchain=1) =
     KissMCMCJL(nsamples, nburnin, nthin, nchain)
 
 """
-    DynamicHMCJL(; nsamples=1000, n_warmup=500, ad=ForwardDiffAD())
+    DynamicHMCJL(; nsamples=1000, n_warmup=500, ad=ADTypes.AutoForwardDiff())
 
 Backend for posterior sampling using Hamiltonian Monte Carlo via
 [DynamicHMC.jl](https://github.com/tpapp/DynamicHMC.jl).
@@ -63,14 +63,13 @@ Requires `using DynamicHMC, LogDensityProblems` (loads the
 `TRGBDistancesDynamicHMCExt` extension).
 
 Gradient computation is required and is handled by the `ad` backend:
-- [`ForwardDiffAD()`](@ref) (default): requires `using ForwardDiff`.
-- [`ZygoteAD()`](@ref): requires `using Zygote`.
+- `ADTypes.AutoForwardDiff()` (default): requires `using ForwardDiff`.
 
 # Example
 ```julia
-using DynamicHMC, LogDensityProblems, ForwardDiff
+using DynamicHMC, LogDensityProblems, ForwardDiff, ADTypes
 chain = sample(BrokenPowerLaw, mags, err, compl, bias, x0;
-               prior=prior, backend=DynamicHMCJL(nsamples=1000, ad=ForwardDiffAD()))
+               prior=prior, backend=DynamicHMCJL(nsamples=1000, ad=ADTypes.AutoForwardDiff()))
 ```
 """
 struct DynamicHMCJL <: AbstractSamplerBackend
