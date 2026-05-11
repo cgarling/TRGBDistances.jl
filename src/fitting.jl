@@ -152,21 +152,19 @@ julia> using Optim
 
 julia> using StableRNGs: StableRNG
 
-julia> using Distributions: Normal
-
 julia> err_func(x) = exp_photerr(x, 1.05, 10.0, 32.0, 0.01);
 
 julia> complete_func(x) = Martin2016_complete(x, 1.0, 26.0, 0.3);
 
 julia> bias_func(m) = 0.0;
 
-julia> model_true = BrokenPowerLaw(22.0, 0.3, 0.2, 0.1);
+julia> model_true = BrokenPowerLaw(22.0, 0.3, 0.4, 0.1);
 
-julia> x0 = [22.2, 0.4, 0.2, 0.1];  # start near truth
+julia> x0 = [22.2, 0.4, 0.3, 0.1];  # start near truth
 
 julia> mags = observe(StableRNG(42), model_true, 500; err_func, complete_func, bias_func);
 
-julia> result = fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0; prior=(Normal(x0[1], 0.5), nothing, nothing, nothing));
+julia> result = fit(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0)
 
 julia> result isa TRGBFitResult
 true
