@@ -32,7 +32,7 @@ TRGBDistancesKissMCMCExt = "KissMCMC"
 TRGBDistancesOptimExt = "Optim"
 
 [compat]
-ADTypes = "1.22.0"
+ADTypes = "1"
 AdvancedMH = "0.8"
 AffineInvariantMCMC = "1"
 Distributions = "0.25"
