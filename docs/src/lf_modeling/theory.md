@@ -1,4 +1,4 @@
-# Theory: TRGB Luminosity Function Modeling
+# [Theory: TRGB Luminosity Function Modeling](@id lf_theory)
 
 ## Background
 
