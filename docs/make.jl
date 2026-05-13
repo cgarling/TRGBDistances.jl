@@ -42,5 +42,7 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/cgarling/TRGBDistances.jl",
+    versions = ["stable" => "v^", "v#.#"],
     devbranch="main",
+    push_preview=true
 )
