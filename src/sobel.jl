@@ -95,7 +95,7 @@ function sobel_trgb(mags; bin_width=0.1, response=nothing, magnitude_range=nothi
         Float64(magnitude_range[1]), Float64(magnitude_range[2])
     end
 
-    # Build bin edges and centres
+    # Build bin edges and centers
     n_bins = max(3, ceil(Int, (m_max - m_min) / bin_width))
     bin_centers = [m_min + (i - 0.5) * bin_width for i in 1:n_bins]
 
@@ -140,12 +140,12 @@ out[i] = Σ_j  counts[j] · pdf(d,  bin_centers[i] − bin_centers[j])
 ```
 
 This is a discrete convolution of `counts` with the probability density
-function of `d` evaluated on the (uniform) bin-centre grid.  The result
-is *not* renormalized, so the overall scale is preserved.
+function of `d` evaluated on the (uniform) bin-center grid. 
+If `renorm` is `true` (default), the result is renormalized to preserve the total counts.
 """
 function _convolve_histogram(counts::AbstractVector,
                              bin_centers::AbstractVector,
-                             d)
+                             d; renorm::Bool=true)
     T = promote_type(eltype(counts), eltype(bin_centers), eltype(pdf(d, zero(eltype(bin_centers)))))
     n = length(bin_centers)
     out = zeros(T, n)
@@ -153,6 +153,11 @@ function _convolve_histogram(counts::AbstractVector,
         for j in 1:n
             out[i] += counts[j] * pdf(d, bin_centers[i] - bin_centers[j])
         end
+    end
+    if renorm
+        # Δx = bin_centers[2] - bin_centers[1] # Assume uniform binning
+        # out .*= Δx  # Renormalize to preserve total counts
+        out .*= sum(counts) / sum(out)  # Renormalize to preserve total counts
     end
     return out
 end

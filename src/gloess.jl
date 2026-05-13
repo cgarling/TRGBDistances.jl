@@ -49,7 +49,7 @@ Gaussian kernel with bandwidth ``h`` and ``n_j`` are the bin counts.
 
 # Arguments
 - `counts`: Star counts per bin (integer or float vector).
-- `bin_centers`: Bin-centre magnitudes (same length as `counts`).
+- `bin_centers`: Bin-center magnitudes (same length as `counts`).
 
 # Keyword Arguments
 - `bandwidth`: Gaussian kernel bandwidth in magnitudes (default `0.2`).
@@ -159,7 +159,7 @@ function gloess_trgb(mags; bandwidth=0.2, bin_width=0.1, magnitude_range=nothing
         Float64(magnitude_range[1]), Float64(magnitude_range[2])
     end
 
-    # Build bin edges and centres
+    # Build bin edges and centers
     n_bins = max(3, ceil(Int, (m_max - m_min) / bin_width))
     bin_centers = [m_min + (i - 0.5) * bin_width for i in 1:n_bins]
 

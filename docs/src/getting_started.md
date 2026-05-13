@@ -220,10 +220,12 @@ ax2  = Axis(fig2[1, 1], xlabel = "Magnitude", ylabel = "Count",
     title = "Edge Detection Comparison",
     limits = (extrema(hist_bins)..., nothing, nothing))
 
-hist!(ax2, mags; color = :blue, label = "Observed", bins = hist_bins)
-vlines!(ax2, [model_true.m_trgb];      color = :red,    linestyle = :solid,  linewidth = 2, label = "True TRGB")
-vlines!(ax2, [result.minimizer[1]];    color = :black,  linestyle = :dash, linewidth = 2, label = "LF fit")
-vlines!(ax2, [result_sobel.m_trgb];    color = :green,  linestyle = :dashdot,   linewidth = 2, label = "Sobel")
+# Support for Makie.barplot(::SobelResult) is defined in
+# TRGBDistancesMakieExt, plotting the internal histogram
+barplot!(ax2, result_sobel; color = :blue, label = "Observed", gap = 0, strokecolor = :black, strokewidth = 1)
+vlines!(ax2, [model_true.m_trgb]; color = :red, linestyle = :solid, linewidth = 2, label = "True TRGB")
+vlines!(ax2, [result.minimizer[1]]; color = :black, linestyle = :dash, linewidth = 2, label = "LF fit")
+vlines!(ax2, [result_sobel.m_trgb]; color = :green, linestyle = :dashdot, linewidth = 2, label = "Sobel")
 
 axislegend(ax2, position = :lt)
 fig2
@@ -250,6 +252,25 @@ using Distributions
 result_sobel_smooth = sobel_trgb(mags; bin_width=0.1, magnitude_range=(23.5,24.5),
                                  response=Normal(0, 0.05))
 println("Sobel (Gaussian pre-smooth) TRGB: ", round(result_sobel_smooth.m_trgb; digits=3))
+```
+
+The edge signal is saved in the `edge_signal` field of the
+[`SobelResult`](@ref TRGBDistances.SobelResult) type, and can be
+plotted directly via our Makie extension when using `lines` or `scatter`:
+
+```@example
+fig = Figure()
+ax  = Axis(fig[1, 1], xlabel = "Magnitude", ylabel = "Edge Signal",
+    title = "Edge Detection Comparison")
+
+lines!(ax, result_sobel, color = :black, linestyle = :dash, label = "Sobel, No Smoothing")
+lines!(ax, result_sobel_smooth, color = :green, linestyle = :dashdot, label = "Sobel + Smoothing")
+vlines!(ax, [model_true.m_trgb]; color = :red, linestyle = :solid, linewidth = 2, label = "True TRGB")
+vlines!(ax, [result_sobel.m_trgb]; color = :black, linestyle = :dash, linewidth = 2)
+vlines!(ax, [result_sobel_smooth.m_trgb]; color = :green, linestyle = :dashdot, linewidth = 2)
+
+axislegend(ax, position = :lt)
+fig
 ```
 
 ## Edge Detection with GLOESS

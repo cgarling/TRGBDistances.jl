@@ -21,6 +21,7 @@ DynamicHMC = "bbc10e6e-7c05-544b-b16e-64fede858acb"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 KissMCMC = "79d62d8d-4dfd-5781-bc85-ce78e0ac132a"
 LogDensityProblems = "6fdf6af0-433a-55f7-b3ed-c6c6e0b8df7c"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 
 [extensions]
@@ -29,6 +30,7 @@ TRGBDistancesAffineInvariantMCMCExt = "AffineInvariantMCMC"
 TRGBDistancesDynamicHMCExt = ["DynamicHMC", "LogDensityProblems"]
 TRGBDistancesForwardDiffExt = "ForwardDiff"
 TRGBDistancesKissMCMCExt = "KissMCMC"
+TRGBDistancesMakieExt = "Makie"
 TRGBDistancesOptimExt = "Optim"
 
 [compat]
@@ -44,6 +46,7 @@ IrrationalConstants = "0.2"
 KissMCMC = "0.2"
 LinearAlgebra = "1"
 LogDensityProblems = "0.6, 1, 2"
+Makie = "0.22, 0.23, 0.24"
 Optim = "1, 2"
 QuadGK = "2"
 SpecialFunctions = "2"
