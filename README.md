@@ -25,12 +25,12 @@ the **Tip of the Red Giant Branch** (TRGB) standard candle.
   - [AdvancedMH.jl](https://github.com/TuringLang/AdvancedMH.jl) — random-walk
     Metropolis-Hastings.
   - [AffineInvariantMCMC.jl](https://github.com/madsjulia/AffineInvariantMCMC.jl)
-    — affine-invariant ensemble (Goodman & Weare 2010).
+    — affine-invariant ensemble (emcee-style).
   - [DynamicHMC.jl](https://github.com/tpapp/DynamicHMC.jl) — Hamiltonian
     Monte Carlo (note: slower than the other backends for this use case; see
     documentation).
 - **Edge-detection methods** — fast, non-parametric TRGB estimates:
-  - **Sobel filter** ([Lee et al. 1993](https://doi.org/10.1086/173327)) —
+  - **Sobel filter** ([Lee et al. 1993](https://doi.org/10.1086/173334)) —
     applies a discrete edge-detection kernel to the magnitude histogram, with
     optional Gaussian pre-smoothing via a user-supplied response distribution.
   - **GLOESS + Sobel** ([Persson et al. 2004](https://doi.org/10.1086/424934);
