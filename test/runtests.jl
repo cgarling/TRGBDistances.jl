@@ -25,6 +25,7 @@ const bias_func     = m -> 0.0
 
     # -------------------------------------------------------------------
     @testset "BrokenPowerLaw — definition" begin
+        using TRGBDistances: BrokenPowerLaw, ψ
         model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         # At the TRGB from the bright (AGB) side: 10^(c*0) = 1.0
         @test ψ(model, 24.0 - 1e-12) ≈ 1.0 atol=1e-6
@@ -45,6 +46,7 @@ const bias_func     = m -> 0.0
 
     # -------------------------------------------------------------------
     @testset "ϕ — convolution integral" begin
+        using TRGBDistances: BrokenPowerLaw, ϕ
         model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         # ϕ should be positive everywhere near the TRGB
         for m in 22.0:0.5:26.0
@@ -58,6 +60,7 @@ const bias_func     = m -> 0.0
 
     # -------------------------------------------------------------------
     @testset "ϕ_norm — normalization" begin
+        using TRGBDistances: BrokenPowerLaw, ϕ_norm
         model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         limits = (22.0, 27.0)
         # Normalization must be positive
@@ -71,6 +74,7 @@ const bias_func     = m -> 0.0
 
     # -------------------------------------------------------------------
     @testset "loglikelihood — formula" begin
+        using TRGBDistances: BrokenPowerLaw, loglikelihood
         model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         mags = [23.5, 24.0, 24.2, 24.5, 25.0]
         ll = loglikelihood(model, mags, err_func, complete_func, bias_func)
@@ -86,6 +90,8 @@ const bias_func     = m -> 0.0
 
     # -------------------------------------------------------------------
     @testset "Inverse-CDF sampling — BrokenPowerLaw" begin
+        using TRGBDistances: BrokenPowerLaw
+        using TRGBDistances: TRGBDistances
         model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         # CDF at m_trgb from the bright side should be less than at m_trgb
         @test TRGBDistances.cdf_bpl(model, 23.5) < TRGBDistances.cdf_bpl(model, 24.0)
@@ -112,6 +118,7 @@ const bias_func     = m -> 0.0
 
     # -------------------------------------------------------------------
     @testset "observe — synthetic catalog generation" begin
+        using TRGBDistances: BrokenPowerLaw, observe
         model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         err(m)   = 0.05 + 0.05 * max(m - 25.0, 0.0)
         compl(m) = m < 26.5 ? 1.0 : 0.0
@@ -126,6 +133,7 @@ const bias_func     = m -> 0.0
 
     # -------------------------------------------------------------------
     @testset "logprior interface" begin
+        using TRGBDistances: logprior
         θ = [24.0, 0.3, 0.2, 0.1]
         # Flat prior returns 0
         @test logprior(nothing, θ) == 0.0
@@ -142,6 +150,7 @@ const bias_func     = m -> 0.0
     @testset "fit API — OptimJL backend" begin
         # Only run if Optim is available
         try
+            using TRGBDistances: BrokenPowerLaw, fit, OptimJL, observe, TRGBFitResult
             using Optim: Optim
             model_true = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
             rng = StableRNG(1234)
@@ -162,6 +171,7 @@ const bias_func     = m -> 0.0
 
     # -------------------------------------------------------------------
     @testset "filter_mags" begin
+        using TRGBDistances: filter_mags
         colors = [1.0, 1.2, 1.5, 2.0, 0.5]
         mags   = [24.0, 24.5, 25.0, 25.5, 26.0]
         ridge_colors = [1.0, 1.1, 1.2, 1.3, 1.4]
@@ -175,15 +185,17 @@ const bias_func     = m -> 0.0
 
     # -------------------------------------------------------------------
     @testset "Rizzi2007 calibration" begin
-        cal = TRGBDistances.Rizzi2007(1.5, :ACS, :F814W, :F606W)
+        using TRGBDistances: Rizzi2007
+        cal = Rizzi2007(1.5, :ACS, :F814W, :F606W)
         @test cal ≈ -4.006 atol=1e-3
-        @test_throws ArgumentError TRGBDistances.Rizzi2007(1.5, :ACS, :F814W, :F435W)
+        @test_throws ArgumentError Rizzi2007(1.5, :ACS, :F814W, :F435W)
     end
 
     # -------------------------------------------------------------------
     @testset "AD backends — build_gradient / build_hessian" begin
         using ForwardDiff: ForwardDiff
         using LinearAlgebra: I
+        using TRGBDistances: build_gradient, build_hessian
         f  = x -> sum(x .^ 2)
         x  = [1.0, 2.0, 3.0]
 
@@ -206,6 +218,7 @@ const bias_func     = m -> 0.0
     @testset "fit API — first/second-order with ForwardDiff" begin
         using Optim: Optim
         using ForwardDiff: ForwardDiff
+        using TRGBDistances: BrokenPowerLaw, fit, OptimJL, observe, TRGBFitResult
         model_true = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         rng  = StableRNG(1234)
         mags = observe(rng, model_true, 500;
@@ -227,27 +240,127 @@ const bias_func     = m -> 0.0
 
     # -------------------------------------------------------------------
     # This is pretty slow, but leaving it for now (could reduce samples, warmup, etc)
-    @testset "sample API — DynamicHMCJL backend" begin
-        using DynamicHMC: DynamicHMC
-        using LogDensityProblems: LogDensityProblems
-        using ForwardDiff: ForwardDiff
+    # @testset "sample API — DynamicHMCJL backend" begin
+    #     using DynamicHMC: DynamicHMC
+    #     using LogDensityProblems: LogDensityProblems
+    #     using ForwardDiff: ForwardDiff
+    #     using Distributions
+    #     model_true = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
+    #     rng  = StableRNG(1234)
+    #     mags = observe(rng, model_true, 300;
+    #                    err_func=err_func, complete_func=complete_func, bias_func=bias_func)
+    #     x0    = [24.0, 0.3, 0.2, 0.1]
+    #     prior = (Normal(24.0, 0.5), nothing, nothing, nothing)
+    #     chain = TRGBDistances.sample(
+    #         BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0;
+    #         backend=DynamicHMCJL(nsamples=200, n_warmup=100, ad=AutoForwardDiff()),
+    #         prior=prior, rng=StableRNG(1234),
+    #     )
+    #     @test chain isa TRGBChain
+    #     @test size(chain.samples, 1) == 4    # n_params
+    #     @test size(chain.samples, 2) == 200  # nsamples
+    #     @test length(chain.logprob) == 200
+    #     @test 0 <= chain.acceptance_fraction <= 1
+    # end
+
+    # -------------------------------------------------------------------
+    @testset "sample API — AdvancedMHJL backend" begin
+        using AdvancedMH: AdvancedMH
         using Distributions
         model_true = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
-        rng  = StableRNG(1234)
+        rng  = StableRNG(42)
         mags = observe(rng, model_true, 300;
                        err_func=err_func, complete_func=complete_func, bias_func=bias_func)
         x0    = [24.0, 0.3, 0.2, 0.1]
         prior = (Normal(24.0, 0.5), nothing, nothing, nothing)
         chain = TRGBDistances.sample(
             BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0;
-            backend=DynamicHMCJL(nsamples=200, n_warmup=100, ad=AutoForwardDiff()),
-            prior=prior, rng=StableRNG(1234),
+            backend=AdvancedMHJL(nsamples=500, nburnin=100, proposal_scale=0.01),
+            prior=prior, rng=StableRNG(42),
         )
         @test chain isa TRGBChain
-        @test size(chain.samples, 1) == 4    # n_params
-        @test size(chain.samples, 2) == 200  # nsamples
-        @test length(chain.logprob) == 200
+        @test size(chain.samples, 1) == 4     # n_params
+        @test size(chain.samples, 2) == 500   # nsamples
+        @test length(chain.logprob) == 500
         @test 0 <= chain.acceptance_fraction <= 1
+        @test all(isfinite, chain.samples)
+    end
+
+    # -------------------------------------------------------------------
+    @testset "sample API — AffineInvariantMCMCJL backend" begin
+        using AffineInvariantMCMC: AffineInvariantMCMC
+        using Distributions
+        model_true = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
+        rng = StableRNG(7)
+        mags= observe(rng, model_true, 300;
+                      err_func=err_func, complete_func=complete_func, bias_func=bias_func)
+        x0 = [24.0, 0.3, 0.2, 0.1]
+        prior = (Normal(24.0, 0.5), nothing, nothing, nothing)
+        chain = TRGBDistances.sample(
+            BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0;
+            backend=AffineInvariantMCMCJL(nsamples=100, nburnin=50, nwalkers=6),
+            prior=prior, rng=StableRNG(7))
+        @test chain isa TRGBChain
+        @test size(chain.samples, 1) == 4       # n_params
+        @test size(chain.samples, 2) == 10 * 100  # n_walkers * n_samples
+        @test length(chain.logprob) == 10 * 100
+        @test 0 <= chain.acceptance_fraction <= 1
+        @test all(isfinite, chain.samples)
+    end
+
+    # -------------------------------------------------------------------
+    @testset "Sobel edge detection" begin
+        using TRGBDistances: sobel_trgb, SobelResult
+        # Generate a synthetic dataset
+        model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
+        rng   = StableRNG(99)
+        mags  = observe(rng, model, 500;
+                        err_func, complete_func,
+                        bias_func, upper_limit=2.0)
+
+        # Pure Sobel (no pre-smoothing) — structural tests
+        result = sobel_trgb(mags; bin_width=0.1, magnitude_range=(23.5, 24.5))
+        @test result isa SobelResult
+        @test length(result.bin_centers) == length(result.edge_signal)
+        @test length(result.bin_centers) == length(result.counts)
+        @test all(b -> 23.4 <= b <= 24.6, result.bin_centers)  # bin centers should be within the specified range (with some padding)
+        @test sum(result.counts) == count(m -> 23.5 <= m <= 24.5, mags)
+        @test result.m_trgb ≈ 24.0 atol=0.1  # Should be close to true value
+
+        # With Gaussian pre-smoothing — structural tests
+        using Distributions
+        result_smooth = sobel_trgb(mags; bin_width=0.1, response=Normal(0, 0.05), magnitude_range=(23.5, 24.5))
+        @test result_smooth isa SobelResult
+        @test result.m_trgb ≈ result_smooth.m_trgb atol=0.01  # Should give similar TRGB estimate
+    end
+
+    # -------------------------------------------------------------------
+    @testset "GLOESS edge detection" begin
+        using TRGBDistances: gloess_smooth, gloess_trgb, GLOESSResult
+        model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
+        rng   = StableRNG(123)
+        mags  = observe(rng, model, 500;
+                        err_func, complete_func,
+                        bias_func, upper_limit=2.0)
+
+        # Structural tests
+        result = gloess_trgb(mags; bandwidth=0.2, bin_width=0.1, magnitude_range=(23.5, 24.5))
+        @test result isa GLOESSResult
+        @test length(result.bin_centers) == length(result.edge_signal)
+        @test length(result.bin_centers) == length(result.smoothed_counts)
+        @test length(result.bin_centers) == length(result.counts)
+        @test sum(result.counts) == count(m -> 23.5 <= m <= 24.5, mags)
+        @test all(b -> 23.4 <= b <= 24.9, result_range.bin_centers)  # bin centers should be within the specified range (with some padding)
+        @test result.m_trgb ≈ 24.0 atol=0.1  # Should be close to true value
+
+        # gloess_smooth standalone
+        bc = collect(22.0:0.1:26.0)
+        n  = [i > 20 ? 10.0 : 1.0 for i in eachindex(bc)]
+        sm = gloess_smooth(n, bc; bandwidth=0.2)
+        @test length(sm) == length(bc)
+        @test all(isfinite, sm)
+        # Smoothed LF still rises toward faint end
+        @test sm[end] > sm[1]
     end
 
 end

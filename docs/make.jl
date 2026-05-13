@@ -25,6 +25,11 @@ makedocs(;
         "Luminosity Function Modeling" => [
             "Theory" => "lf_modeling/theory.md",
         ],
+        "Edge Detection Methods" => [
+            "Overview" => "edge_detection/index.md",
+            "Sobel Filter" => "edge_detection/sobel.md",
+            "GLOESS" => "edge_detection/gloess.md",
+        ],
         "References" => "refs.md",
     ],
     doctest=false,

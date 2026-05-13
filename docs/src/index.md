@@ -7,15 +7,23 @@ CurrentModule = TRGBDistances
 Documentation for [TRGBDistances](https://github.com/cgarling/TRGBDistances.jl).
 
 `TRGBDistances.jl` provides tools for measuring distances using the Tip of the Red Giant
-Branch (TRGB) standard candle. The package implements:
+Branch (TRGB) standard candle. For measuring TRGB magnitudes, the package implements:
 
 - **Luminosity function modeling** following Makarov et al. (2006): broken power-law
   ``\psi(m)`` convolved with photometric errors, completeness, and bias.
 - **Maximum likelihood and MAP estimation** via a flexible backend API (Optim.jl).
-- **Posterior sampling** via MCMC (KissMCMC.jl backend).
+- **Posterior sampling** via multiple MCMC backends: KissMCMC.jl (affine-invariant
+  ensemble), AdvancedMH.jl (random-walk Metropolis-Hastings), AffineInvariantMCMC.jl
+  (affine-invariant ensemble), and DynamicHMC.jl (Hamiltonian Monte Carlo).
+- **Edge-detection methods**: Sobel filter ([Lee1993](@citet)) and GLOESS+Sobel
+  ([Persson2004](@citet); [Madore2009](@citet)) for fast, non-parametric TRGB estimates.
 - **Synthetic catalog generation** via analytic inverse-CDF sampling.
 - **Photometric filter selection** utilities.
-- **TRGB calibrations** ([Rizzi2007](@citet), Fusco+2012).
+
+We also have a library of TRGB calibrations that allow conversion from observed
+TRGB magnitude to distance in various filters:
+- [Rizzi2007](@citet)
+- [Fusco2012](@citet)
 
 ## Contents
 
@@ -23,16 +31,10 @@ Branch (TRGB) standard candle. The package implements:
 Pages = [
     "getting_started.md",
     "lf_modeling/theory.md",
+    "edge_detection/index.md",
+    "edge_detection/sobel.md",
+    "edge_detection/gloess.md",
     "dev/makarov_audit.md",
 ]
 Depth = 2
-```
-
-## API Reference
-
-```@index
-```
-
-```@autodocs
-Modules = [TRGBDistances]
 ```
