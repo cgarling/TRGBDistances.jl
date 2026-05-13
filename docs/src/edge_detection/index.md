@@ -11,7 +11,7 @@ stellar magnitude histogram:
 | Method | Function | Reference |
 |--------|----------|-----------|
 | Sobel filter | [`sobel_trgb`](@ref) | [Lee1993](@citet) |
-| GLOESS + Sobel | [`gloess_trgb`](@ref) | [Persson2004](@citet); [Madore2009](@citet) |
+| GLOESS + Sobel | [`gloess_trgb`](@ref) | [Persson2004](@citet); [Hatt2017](@citet) |
 
 ## Why use edge detection instead of LF fitting?
 

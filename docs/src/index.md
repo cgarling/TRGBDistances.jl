@@ -16,14 +16,28 @@ Branch (TRGB) standard candle. For measuring TRGB magnitudes, the package implem
   ensemble), AdvancedMH.jl (random-walk Metropolis-Hastings), AffineInvariantMCMC.jl
   (affine-invariant ensemble), and DynamicHMC.jl (Hamiltonian Monte Carlo).
 - **Edge-detection methods**: Sobel filter ([Lee1993](@citet)) and GLOESS+Sobel
-  ([Persson2004](@citet); [Madore2009](@citet)) for fast, non-parametric TRGB estimates.
+  ([Persson2004](@citet); [Hatt2017](@citet)) for fast, non-parametric TRGB estimates.
 - **Synthetic catalog generation** via analytic inverse-CDF sampling.
 - **Photometric filter selection** utilities.
 
+## Calibrations
+
 We also have a library of TRGB calibrations that allow conversion from observed
 TRGB magnitude to distance in various filters:
-- [Rizzi2007](@citet)
-- [Fusco2012](@citet)
+
+```@docs
+TRGBDistances.Rizzi2007
+TRGBDistances.Fusco2012
+```
+
+## Utilities
+
+```@docs
+TRGBDistances.Martin2016_complete
+TRGBDistances.exp_photerr
+TRGBDistances.observe
+TRGBDistances.filter_mags
+```
 
 ## Contents
 

@@ -3,7 +3,7 @@ CurrentModule = TRGBDistances
 ShareDefaultModule = true
 ```
 
-# Getting Started
+# [Getting Started](@id getting_started)
 
 ## Installation
 
@@ -256,7 +256,7 @@ println("Sobel (Gaussian pre-smooth) TRGB: ", round(result_sobel_smooth.m_trgb; 
 
 The [GLOESS](@ref "GLOESS Smoothing") algorithm [Persson2004](@cite) applies
 Gaussian-windowed locally-weighted smoothing to the histogram before Sobel edge detection
-[Madore2009](@cite).  It is more robust than the plain Sobel filter when the histogram
+[Hatt2017](@cite).  It is more robust than the plain Sobel filter when the histogram
 is noisy.
 
 ```@example

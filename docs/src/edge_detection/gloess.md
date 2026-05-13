@@ -8,7 +8,7 @@ CurrentModule = TRGBDistances
 
 GLOESS (Gaussian-windowed Locally-Weighted Scatterplot Smoothing) was
 introduced by [Persson2004](@cite) to smooth Cepheid light curves and has
-since been applied to TRGB detection [Madore2009](@cite).  For TRGB work the
+since been applied to TRGB detection [Hatt2017](@cite).  For TRGB work the
 algorithm proceeds in three steps:
 
 1. **Bin** the magnitudes into a histogram of width ``\Delta m``.

@@ -4,7 +4,7 @@
 #
 # Primary references:
 #   Persson et al. 2004 [Persson2004] — definition of the GLOESS algorithm.
-#   Madore & Freedman 2009 [Madore2009] — GLOESS applied to TRGB detection.
+#   Madore & Freedman 2009 [Hatt2017] — GLOESS applied to TRGB detection.
 # ---------------------------------------------------------------------------
 
 """
@@ -96,7 +96,7 @@ end
 
 Estimate the TRGB apparent magnitude from observed stellar magnitudes using
 GLOESS smoothing [Persson2004](@cite) followed by Sobel edge detection
-[Lee1993](@cite), as applied to TRGB measurement in [Madore2009](@cite).
+[Lee1993](@cite), as applied to TRGB measurement in [Hatt2017](@cite).
 
 The algorithm proceeds in three steps:
 

@@ -24,6 +24,7 @@ makedocs(;
         "Getting Started" => "getting_started.md",
         "Luminosity Function Modeling" => [
             "Theory" => "lf_modeling/theory.md",
+            "Implementation" => "lf_modeling/implementation.md",
         ],
         "Edge Detection Methods" => [
             "Overview" => "edge_detection/index.md",
@@ -31,6 +32,7 @@ makedocs(;
             "GLOESS" => "edge_detection/gloess.md",
         ],
         "References" => "refs.md",
+        "Index" => "doc_index.md",
     ],
     doctest=false,
     linkcheck=ci,

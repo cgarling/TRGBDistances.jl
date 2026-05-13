@@ -1,6 +1,10 @@
 """
 `LuminosityFunction{T}` is the abstract supertype for luminosity functions that can be used
-to model the TRGB. Subtypes should implement [`ψ`](@ref).
+to model the TRGB. Subtypes should implement the following functions:
+ - [`ψ`](@ref TRGBDistances.ψ) returns the value of the luminosity function at a given magnitude.
+ - [`is_valid`](@ref TRGBDistances.is_valid) returns `true` if the model parameters are valid (e.g., positive slopes).
+ - [`ψ_breakpoints`](@ref TRGBDistances.ψ_breakpoints) returns a tuple of magnitudes at which `ψ` has discontinuities (e.g., jumps). This is used to inform the quadrature routines to avoid straddling these points.
+ - [`loglikelihood`](@ref TRGBDistances.loglikelihood) computes the log-likelihood of the observed data given the model parameters and the photometric error, completeness, and bias functions.
 """
 abstract type LuminosityFunction{T} end
 (l::LuminosityFunction)(m) = ψ(l, m)
