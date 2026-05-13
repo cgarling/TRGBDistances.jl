@@ -1,7 +1,7 @@
 
 """
     Rizzi2007(color, obssym::Symbol, magsym::Symbol, colorsym::Symbol)
-Color-dependent TRGB zeropoint magnitude from Rizzi+2007. 
+Color-dependent TRGB zeropoint magnitude from [Rizzi2007](@citet). 
 
 ```jldoctest
 julia> TRGBDistances.Rizzi2007(1.5, :ACS, :F814W, :F606W) ≈ -4.006
