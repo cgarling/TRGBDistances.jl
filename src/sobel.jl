@@ -67,7 +67,7 @@ discontinuous step at the TRGB in the RGB luminosity function).
   by one `bin_width` on each side.
 
 # Returns
-A [`SobelResult`](@ref).
+A [`SobelResult`](@ref TRGBDistances.SobelResult).
 
 # Examples
 ```jldoctest
@@ -81,7 +81,7 @@ julia> mags = observe(StableRNG(1), model, 500; err_func=m->0.05, complete_func=
 
 julia> result = sobel_trgb(mags; bin_width=0.1, magnitude_range=(23.5, 24.5));
 
-julia> result isa SobelResult
+julia> result isa TRGBDistances.SobelResult
 true
 
 julia> abs(result.m_trgb - 24.0) < 0.1 # Close to true value

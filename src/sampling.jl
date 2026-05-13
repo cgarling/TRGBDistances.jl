@@ -52,7 +52,7 @@ Sample from the posterior of a [`LuminosityFunction`](@ref) model given observed
 
 # Returns
 
-A [`TRGBChain`](@ref).
+A [`TRGBChain`](@ref TRGBDistances.TRGBChain).
 """
 function sample(model_factory, mags, err_func, complete_func, bias_func, x0;
                 backend=KissMCMCJL(), prior=nothing, int_width=1.0, kwargs...)

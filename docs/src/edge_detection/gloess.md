@@ -55,9 +55,9 @@ where ``\sigma_{\rm phot}`` is the typical photometric error near the TRGB.
 ## API
 
 ```@docs
-gloess_trgb
-gloess_smooth
-GLOESSResult
+TRGBDistances.gloess_trgb
+TRGBDistances.gloess_smooth
+TRGBDistances.GLOESSResult
 ```
 
 ## References

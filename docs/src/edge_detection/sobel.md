@@ -62,8 +62,8 @@ filter.
 ## API
 
 ```@docs
-sobel_trgb
-SobelResult
+TRGBDistances.sobel_trgb
+TRGBDistances.SobelResult
 ```
 
 ## References

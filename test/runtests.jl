@@ -245,6 +245,7 @@ const bias_func     = m -> 0.0
     #     using LogDensityProblems: LogDensityProblems
     #     using ForwardDiff: ForwardDiff
     #     using Distributions
+    #     using TRGBDistances: BrokenPowerLaw, observe, TRGBChain
     #     model_true = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
     #     rng  = StableRNG(1234)
     #     mags = observe(rng, model_true, 300;
@@ -267,6 +268,7 @@ const bias_func     = m -> 0.0
     @testset "sample API — AdvancedMHJL backend" begin
         using AdvancedMH: AdvancedMH
         using Distributions
+        using TRGBDistances: BrokenPowerLaw, observe, TRGBChain
         model_true = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         rng  = StableRNG(42)
         mags = observe(rng, model_true, 300;
@@ -290,6 +292,7 @@ const bias_func     = m -> 0.0
     @testset "sample API — AffineInvariantMCMCJL backend" begin
         using AffineInvariantMCMC: AffineInvariantMCMC
         using Distributions
+        using TRGBDistances: BrokenPowerLaw, observe, TRGBChain
         model_true = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         rng = StableRNG(7)
         mags= observe(rng, model_true, 300;
@@ -302,15 +305,15 @@ const bias_func     = m -> 0.0
             prior=prior, rng=StableRNG(7))
         @test chain isa TRGBChain
         @test size(chain.samples, 1) == 4       # n_params
-        @test size(chain.samples, 2) == 10 * 100  # n_walkers * n_samples
-        @test length(chain.logprob) == 10 * 100
+        @test size(chain.samples, 2) == 6 * 100  # n_walkers * n_samples
+        @test length(chain.logprob) == 6 * 100
         @test 0 <= chain.acceptance_fraction <= 1
         @test all(isfinite, chain.samples)
     end
 
     # -------------------------------------------------------------------
     @testset "Sobel edge detection" begin
-        using TRGBDistances: sobel_trgb, SobelResult
+        using TRGBDistances: BrokenPowerLaw, observe, sobel_trgb, SobelResult
         # Generate a synthetic dataset
         model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         rng   = StableRNG(99)
@@ -336,7 +339,7 @@ const bias_func     = m -> 0.0
 
     # -------------------------------------------------------------------
     @testset "GLOESS edge detection" begin
-        using TRGBDistances: gloess_smooth, gloess_trgb, GLOESSResult
+        using TRGBDistances: BrokenPowerLaw, observe, gloess_smooth, gloess_trgb, GLOESSResult
         model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         rng   = StableRNG(123)
         mags  = observe(rng, model, 500;
@@ -350,7 +353,7 @@ const bias_func     = m -> 0.0
         @test length(result.bin_centers) == length(result.smoothed_counts)
         @test length(result.bin_centers) == length(result.counts)
         @test sum(result.counts) == count(m -> 23.5 <= m <= 24.5, mags)
-        @test all(b -> 23.4 <= b <= 24.9, result_range.bin_centers)  # bin centers should be within the specified range (with some padding)
+        @test all(b -> 23.4 <= b <= 24.9, result.bin_centers)  # bin centers should be within the specified range (with some padding)
         @test result.m_trgb ≈ 24.0 atol=0.1  # Should be close to true value
 
         # gloess_smooth standalone

@@ -131,7 +131,7 @@ The algorithm proceeds in three steps:
   magnitude range.  Defaults to the full data range padded by one `bin_width`.
 
 # Returns
-A [`GLOESSResult`](@ref).
+A [`GLOESSResult`](@ref TRGBDistances.GLOESSResult).
 
 # Examples
 ```jldoctest
@@ -145,7 +145,7 @@ julia> mags = observe(StableRNG(1), model, 2500; err_func=m->0.05, complete_func
 
 julia> result = gloess_trgb(mags; bandwidth=0.2, bin_width=0.1, magnitude_range=(23.5, 24.8));
 
-julia> result isa GLOESSResult
+julia> result isa TRGBDistances.GLOESSResult
 true
 
 julia> abs(result.m_trgb - 24.0) < 0.5
