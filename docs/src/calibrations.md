@@ -12,3 +12,11 @@ TRGBDistances.Yuan2019
 TRGBDistances.Cerny2021
 TRGBDistances.Hoyt2018
 ```
+
+## References
+This page cites the following references:
+
+```@bibliography
+Pages = ["calibrations.md"]
+Canonical = false
+```
