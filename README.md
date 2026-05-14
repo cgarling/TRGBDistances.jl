@@ -68,7 +68,7 @@ mags = observe(StableRNG(1), model_true, 500;
 
 # 3. Quick non-parametric estimate with GLOESS+Sobel
 #    constraining the solution to be between 23.5 and 24.5 mag
-result_gloess = gloess_trgb(mags; bandwidth=0.2, bin_width=0.1, magnitude_range=(23.5, 24.5))
+result_gloess = trgb(GLOESS(bandwidth=0.2, bin_width=0.1, magnitude_range=(23.5, 24.5)), mags)
 println("GLOESS TRGB: ", result_gloess.m_trgb)
 
 # 4. MLE fit with the broken power-law luminosity function
@@ -78,6 +78,7 @@ println("LF fit TRGB: ", result.minimizer[1], " (converged: ", result.converged,
 
 # 5. Posterior sampling with KissMCMC (affine-invariant ensemble)
 using KissMCMC, Distributions
+# Separable prior on each parameter in the BrokenPowerLaw
 prior = (Normal(24.0, 0.3), nothing, nothing, nothing)
 chain = TRGBDistances.sample(BrokenPowerLaw, mags, err_func, complete_func, bias_func, x0;
                              prior, backend=KissMCMCJL(nsamples=5_000, nburnin=500),

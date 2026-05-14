@@ -9,7 +9,7 @@
 """
     SobelResult
 
-Result returned by [`sobel_trgb`](@ref).
+Result returned by [`trgb(Sobel(...), mags)`](@ref TRGBDistances.trgb).
 
 Fields:
 - `m_trgb`: Estimated TRGB apparent magnitude (bin center of peak edge signal).
@@ -28,15 +28,17 @@ Base.show(io::IO, r::SobelResult) =
     print(io, "SobelResult(m_trgb=$(r.m_trgb))")
 
 """
-    sobel_trgb(mags; bin_width=0.1, response=nothing, magnitude_range=nothing)
+    Sobel(;bin_width=0.1, response=nothing, magnitude_range=nothing) <: AbstractEdgeDetector
 
-Estimate the TRGB apparent magnitude from a vector of observed stellar magnitudes
-using a Sobel edge-detection filter applied to the stellar luminosity function
-[Lee1993](@cite).
+Sobel filter estimator [Lee1993](@cite) for the TRGB apparent magnitude
+given a vector of observed stellar magnitudes `mags`. To compute result,
+use [`trgb(Sobel(; ...), mags)`](@ref TRGBDistances.trgb),
+returning a [`SobelResult`](@ref TRGBDistances.SobelResult).
 
 The stars are binned into a histogram of width `bin_width` (in magnitudes).
 If `response` is a [`Distributions.UnivariateDistribution`](https://juliastats.org/Distributions.jl/stable/univariate/),
-the histogram is first convolved with the distribution's probability density
+the histogram of stellar magnitudes is first convolved with the
+distribution's probability density
 function before the Sobel kernel is applied.  This generalised pre-smoothing,
 described in [Sakai1996](@cite), acts as a matched filter for a TRGB edge
 smeared by photometric errors; a `Normal(0, σ)` with `σ` equal to the typical
@@ -54,9 +56,6 @@ discontinuous step at the TRGB in the RGB luminosity function).
     the shape of the luminosity function.  It does not produce a formal
     uncertainty estimate. Uncertainties may be estimated by bootstrapping.
 
-# Arguments
-- `mags`: Vector of dereddened apparent magnitudes.
-
 # Keyword Arguments
 - `bin_width`: Magnitude bin width in magnitudes (default `0.1`).
 - `response`: Optional `Distributions.UnivariateDistribution` for
@@ -65,9 +64,6 @@ discontinuous step at the TRGB in the RGB luminosity function).
 - `magnitude_range`: Optional `(m_min, m_max)` tuple to restrict the
   magnitude range used for binning.  Defaults to the full data range padded
   by one `bin_width` on each side.
-
-# Returns
-A [`SobelResult`](@ref TRGBDistances.SobelResult).
 
 # Examples
 ```jldoctest
@@ -79,7 +75,7 @@ julia> model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1);
 
 julia> mags = observe(StableRNG(1), model, 500; err_func=m->0.05, complete_func=m->1.0, bias_func=m->0.0, upper_limit=2.0);
 
-julia> result = sobel_trgb(mags; bin_width=0.1, magnitude_range=(23.5, 24.5));
+julia> result = trgb(Sobel(bin_width=0.1, magnitude_range=(23.5, 24.5)), mags);
 
 julia> result isa TRGBDistances.SobelResult
 true
@@ -88,6 +84,31 @@ julia> abs(result.m_trgb - 24.0) < 0.1 # Close to true value
 true
 ```
 """
+Base.@kwdef struct Sobel{T,D} <: AbstractEdgeDetector
+    bin_width::T = 0.1
+    response::D = nothing
+    magnitude_range::Union{Nothing, Tuple{T,T}} = nothing
+
+    # Inner constructors to handle type promotion
+    function Sobel(bin_width, response, magnitude_range::Nothing)
+        new{typeof(bin_width), typeof(response)}(bin_width, response, magnitude_range)
+    end
+
+    function Sobel(bin_width, response, magnitude_range::Tuple)
+        T_type = promote_type(typeof(bin_width), typeof(magnitude_range[1]), typeof(magnitude_range[2]))
+        new{T_type, typeof(response)}(convert(T_type, bin_width), response,
+              (convert(T_type, magnitude_range[1]), convert(T_type, magnitude_range[2])))
+    end
+end
+
+Base.show(io::IO, s::Sobel) =
+    print(io, "Sobel(bin_width=$(s.bin_width), response=$(s.response), magnitude_range=$(s.magnitude_range))")
+
+@inline function trgb(op::Sobel, mags)
+    return sobel_trgb(mags; bin_width=op.bin_width, response=op.response, magnitude_range=op.magnitude_range)
+end
+
+# Implements the core Sobel edge detection algorithm. Called by `trgb(::Sobel, mags)`.
 function sobel_trgb(mags; bin_width=0.1, response=nothing, magnitude_range=nothing)
     m_min, m_max = if magnitude_range === nothing
         Float64(minimum(mags) - bin_width / 2), Float64(maximum(mags) + bin_width / 2)

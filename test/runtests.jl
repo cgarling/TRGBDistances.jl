@@ -313,7 +313,7 @@ const bias_func     = m -> 0.0
 
     # -------------------------------------------------------------------
     @testset "Sobel edge detection" begin
-        using TRGBDistances: BrokenPowerLaw, observe, sobel_trgb, SobelResult
+        using TRGBDistances: BrokenPowerLaw, observe, Sobel, trgb, SobelResult
         # Generate a synthetic dataset
         model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         rng   = StableRNG(99)
@@ -322,7 +322,7 @@ const bias_func     = m -> 0.0
                         bias_func, upper_limit=2.0)
 
         # Pure Sobel (no pre-smoothing) — structural tests
-        result = sobel_trgb(mags; bin_width=0.1, magnitude_range=(23.5, 24.5))
+        result = trgb(Sobel(bin_width=0.1, magnitude_range=(23.5, 24.5)), mags)
         @test result isa SobelResult
         @test length(result.bin_centers) == length(result.edge_signal)
         @test length(result.bin_centers) == length(result.counts)
@@ -332,14 +332,14 @@ const bias_func     = m -> 0.0
 
         # With Gaussian pre-smoothing — structural tests
         using Distributions
-        result_smooth = sobel_trgb(mags; bin_width=0.1, response=Normal(0, 0.05), magnitude_range=(23.5, 24.5))
+        result_smooth = trgb(Sobel(bin_width=0.1, response=Normal(0, 0.05), magnitude_range=(23.5, 24.5)), mags)
         @test result_smooth isa SobelResult
         @test result.m_trgb ≈ result_smooth.m_trgb atol=0.01  # Should give similar TRGB estimate
     end
 
     # -------------------------------------------------------------------
     @testset "GLOESS edge detection" begin
-        using TRGBDistances: BrokenPowerLaw, observe, gloess_smooth, gloess_trgb, GLOESSResult
+        using TRGBDistances: BrokenPowerLaw, observe, gloess_smooth, GLOESS, trgb, GLOESSResult
         model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1)
         rng   = StableRNG(123)
         mags  = observe(rng, model, 500;
@@ -347,7 +347,7 @@ const bias_func     = m -> 0.0
                         bias_func, upper_limit=2.0)
 
         # Structural tests
-        result = gloess_trgb(mags; bandwidth=0.2, bin_width=0.1, magnitude_range=(23.5, 24.5))
+        result = trgb(GLOESS(bandwidth=0.2, bin_width=0.1, magnitude_range=(23.5, 24.5)), mags)
         @test result isa GLOESSResult
         @test length(result.bin_centers) == length(result.edge_signal)
         @test length(result.bin_centers) == length(result.smoothed_counts)

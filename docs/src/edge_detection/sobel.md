@@ -51,18 +51,18 @@ matches [Sakai1996](@citet), who apply a Gaussian kernel before the edge
 filter.
 
 ## When to use
-
-- **Use the Sobel filter** when you want a fast, non-parametric TRGB estimate.
-- **Add Gaussian pre-smoothing** (`response = Normal(0, σ)`) when
-  photometric errors are large relative to the bin width, or when the raw
-  histogram is noisy due to small sample size.
-- **Prefer LF fitting** ([`fit`](@ref)) when formal uncertainties are needed
-  or when the data have a well-characterised completeness function.
+- Often [`GLOESS`](@ref) provides a more accurate TRGB estimate than
+  the smoothed Sobel filter and it is no less performant. We typically
+  recommend [`GLOESS`](@ref) as the default edge detection method.
+- [`Sobel`](@ref) can be useful for comparisons, and the flexibility to
+  use any response function can sometimes be useful.
+- We prefer LF fitting and sampling ([`fit`](@ref) and [`sample`](@ref))
+  when the TRGB is well-sampled and formal uncertainties are required.
 
 ## API
 
 ```@docs
-TRGBDistances.sobel_trgb
+TRGBDistances.Sobel
 TRGBDistances.SobelResult
 ```
 

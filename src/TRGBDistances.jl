@@ -13,11 +13,29 @@ include("utilities.jl")
 include("luminosity_functions/luminosity_function.jl")
 include("luminosity_functions/fitting.jl")
 include("luminosity_functions/sampling.jl")
+
+"""
+Abstract type for edge detection methods. Not intended for direct use.
+"""
+abstract type AbstractEdgeDetector end
+
+"""
+    trgb(method, mags)
+Estimate the TRGB magnitude from a vector of dereddened apparent magnitudes 
+`mags` using the specified edge detection `method`. The method should
+be a subtype of `AbstractEdgeDetector`,
+e.g. [`Sobel`](@ref), [`GLOESS`](@ref) -- see the docs of these
+types for usage examples. Returns a result struct specific to
+the method (e.g. [`SobelResult`](@ref), [`GLOESSResult`](@ref)).
+"""
+function trgb end
+
 include("edge_detection/sobel.jl")
 include("edge_detection/gloess.jl")
+include("edge_detection/bootstrap.jl")
 include("simulation.jl")
 
-export BrokenPowerLaw, fit, sample, observe, filter_mags, sobel_trgb, gloess_trgb, Rizzi2007, Fusco2012
+export BrokenPowerLaw, fit, sample, observe, filter_mags, Sobel, GLOESS, bootstrap, trgb, Rizzi2007, Fusco2012
 export OptimJL, KissMCMCJL, DynamicHMCJL, AdvancedMHJL, AffineInvariantMCMCJL # export backends
 
 """

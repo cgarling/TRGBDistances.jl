@@ -10,7 +10,7 @@
 """
     GLOESSResult
 
-Result returned by [`gloess_trgb`](@ref).
+Result returned by [`trgb(GLOESS(...), mags)`](@ref TRGBDistances.trgb).
 
 Fields:
 - `m_trgb`: Estimated TRGB apparent magnitude (bin center of peak edge signal
@@ -30,6 +30,86 @@ end
 
 Base.show(io::IO, r::GLOESSResult) =
     print(io, "GLOESSResult(m_trgb=$(r.m_trgb))")
+
+"""
+    GLOESS(; bandwidth=0.2, bin_width=0.1, magnitude_range=nothing)
+
+GLOESS estimator for the TRGB apparent magnitude given a vector
+of observed stellar magnitudes `mags`. Uses GLOESS smoothing
+[Persson2004](@cite) of the magnitude histogram followed by
+Sobel edge detection [Lee1993](@cite), as applied to TRGB
+measurement in [Hatt2017](@cite). To compute result,
+use [`trgb(GLOESS(; ...), mags)`](@ref TRGBDistances.trgb),
+returning a [`GLOESSResult`](@ref TRGBDistances.GLOESSResult).
+
+The algorithm proceeds in three steps:
+
+1. **Bin** the magnitudes into a histogram with bin width `bin_width`.
+2. **Smooth** the histogram using the [`gloess_smooth`](@ref TRGBDistances.gloess_smooth) kernel with the
+   specified `bandwidth`.  The Gaussian kernel suppresses Poisson noise in the
+   luminosity function while preserving the sharp edge at the TRGB.
+3. **Detect** the edge: apply the Sobel kernel ``[-1, 0, +1]`` to the smoothed
+   histogram.  The TRGB is at the bin with the largest (most positive) edge
+   signal, where star counts rise most sharply going from bright to faint.
+
+!!! note "Bandwidth selection"
+    The `bandwidth` controls the degree of smoothing.  Too small a bandwidth
+    leaves Poisson noise visible; too large a bandwidth washes out the edge.
+    A value in the range ``0.1``–``0.3`` mag is typical for well-sampled data.
+    An initial guess of ``\\sigma_{\\text{phot}} \\lesssim h \\lesssim 5\\,
+    \\sigma_{\\text{phot}}`` (where ``\\sigma_{\\text{phot}}`` is the typical
+    photometric error near the TRGB) is a good starting point.
+
+!!! note "Edge detection vs. likelihood fitting"
+    Like the plain Sobel filter, GLOESS+Sobel is fast and non-parametric but
+    does not produce a formal uncertainty.  Use [`fit`](@ref) for MAP/Bayesian
+    inference with uncertainty estimation. Uncertainties may be estimated by bootstrapping.
+
+# Keyword Arguments
+- `bandwidth`: GLOESS Gaussian kernel bandwidth in magnitudes (default `0.2`).
+- `bin_width`: Magnitude bin width in magnitudes (default `0.1`).
+- `magnitude_range`: Optional `(m_min, m_max)` tuple to restrict the
+  magnitude range.  Defaults to the full data range padded by one `bin_width`.
+
+# Examples
+```jldoctest
+julia> using TRGBDistances
+
+julia> using StableRNGs: StableRNG
+
+julia> model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1);
+
+julia> mags = observe(StableRNG(1), model, 2500; err_func=m->0.05, complete_func=m->1.0, bias_func=m->0.0, upper_limit=2.0);
+
+julia> result = trgb(GLOESS(bandwidth=0.2, bin_width=0.1, magnitude_range=(23.5, 24.8)), mags);
+
+julia> result isa TRGBDistances.GLOESSResult
+true
+
+julia> abs(result.m_trgb - 24.0) < 0.5
+true
+```
+"""
+Base.@kwdef struct GLOESS{T} <: AbstractEdgeDetector
+    bandwidth::T = 0.2
+    bin_width::T = 0.1
+    magnitude_range::Union{Nothing, Tuple{T,T}} = nothing
+
+    function GLOESS(bandwidth, bin_width, magnitude_range::Nothing)
+        T_type = promote_type(typeof(bandwidth), typeof(bin_width))
+        new{T_type}(convert(T_type, bandwidth), convert(T_type, bin_width), nothing)
+    end
+
+    function GLOESS(bandwidth, bin_width, magnitude_range::Tuple)
+        T_type = promote_type(typeof(bandwidth), typeof(bin_width), typeof(magnitude_range[1]), typeof(magnitude_range[2]))
+        new{T_type}(convert(T_type, bandwidth),
+                     convert(T_type, bin_width),
+                     (convert(T_type, magnitude_range[1]), convert(T_type, magnitude_range[2])))
+    end
+end
+
+Base.show(io::IO, s::GLOESS) =
+    print(io, "GLOESS(bandwidth=$(s.bandwidth), bin_width=$(s.bin_width), magnitude_range=$(s.magnitude_range))")
 
 """
     gloess_smooth(counts, bin_centers; bandwidth=0.2) -> Vector{Float64}
@@ -91,67 +171,11 @@ function gloess_smooth(counts::AbstractVector, bin_centers::AbstractVector; band
     return smoothed
 end
 
-"""
-    gloess_trgb(mags; bandwidth=0.2, bin_width=0.1, magnitude_range=nothing)
+@inline function trgb(op::GLOESS, mags)
+    return gloess_trgb(mags; bandwidth=op.bandwidth, bin_width=op.bin_width, magnitude_range=op.magnitude_range)
+end
 
-Estimate the TRGB apparent magnitude from observed stellar magnitudes using
-GLOESS smoothing [Persson2004](@cite) followed by Sobel edge detection
-[Lee1993](@cite), as applied to TRGB measurement in [Hatt2017](@cite).
-
-The algorithm proceeds in three steps:
-
-1. **Bin** the magnitudes into a histogram with bin width `bin_width`.
-2. **Smooth** the histogram using the [`gloess_smooth`](@ref TRGBDistances.gloess_smooth) kernel with the
-   specified `bandwidth`.  The Gaussian kernel suppresses Poisson noise in the
-   luminosity function while preserving the sharp edge at the TRGB.
-3. **Detect** the edge: apply the Sobel kernel ``[-1, 0, +1]`` to the smoothed
-   histogram.  The TRGB is at the bin with the largest (most positive) edge
-   signal, where star counts rise most sharply going from bright to faint.
-
-!!! note "Bandwidth selection"
-    The `bandwidth` controls the degree of smoothing.  Too small a bandwidth
-    leaves Poisson noise visible; too large a bandwidth washes out the edge.
-    A value in the range ``0.1``–``0.3`` mag is typical for well-sampled data.
-    An initial guess of ``\\sigma_{\\text{phot}} \\lesssim h \\lesssim 5\\,
-    \\sigma_{\\text{phot}}`` (where ``\\sigma_{\\text{phot}}`` is the typical
-    photometric error near the TRGB) is a good starting point.
-
-!!! note "Edge detection vs. likelihood fitting"
-    Like the plain Sobel filter, GLOESS+Sobel is fast and non-parametric but
-    does not produce a formal uncertainty.  Use [`fit`](@ref) for MAP/Bayesian
-    inference with uncertainty estimation. Uncertainties may be estimated by bootstrapping.
-
-# Arguments
-- `mags`: Vector of dereddened apparent magnitudes.
-
-# Keyword Arguments
-- `bandwidth`: GLOESS Gaussian kernel bandwidth in magnitudes (default `0.2`).
-- `bin_width`: Magnitude bin width in magnitudes (default `0.1`).
-- `magnitude_range`: Optional `(m_min, m_max)` tuple to restrict the
-  magnitude range.  Defaults to the full data range padded by one `bin_width`.
-
-# Returns
-A [`GLOESSResult`](@ref TRGBDistances.GLOESSResult).
-
-# Examples
-```jldoctest
-julia> using TRGBDistances
-
-julia> using StableRNGs: StableRNG
-
-julia> model = BrokenPowerLaw(24.0, 0.3, 0.2, 0.1);
-
-julia> mags = observe(StableRNG(1), model, 2500; err_func=m->0.05, complete_func=m->1.0, bias_func=m->0.0, upper_limit=2.0);
-
-julia> result = gloess_trgb(mags; bandwidth=0.2, bin_width=0.1, magnitude_range=(23.5, 24.8));
-
-julia> result isa TRGBDistances.GLOESSResult
-true
-
-julia> abs(result.m_trgb - 24.0) < 0.5
-true
-```
-"""
+# Implements the GLOESS + Sobel edge detection algorithm. Called by `trgb(::GLOESS, mags)`.
 function gloess_trgb(mags; bandwidth=0.2, bin_width=0.1, magnitude_range=nothing)
     m_min, m_max = if magnitude_range === nothing
         Float64(minimum(mags) - bin_width / 2), Float64(maximum(mags) + bin_width / 2)
