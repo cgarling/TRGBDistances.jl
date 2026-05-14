@@ -17,6 +17,7 @@ Branch (TRGB) standard candle. For measuring TRGB magnitudes, the package implem
   (affine-invariant ensemble), and DynamicHMC.jl (Hamiltonian Monte Carlo).
 - **Edge-detection methods**: Sobel filter ([Lee1993](@citet)) and GLOESS+Sobel
   ([Persson2004](@citet); [Hatt2017](@citet)) for fast, non-parametric TRGB estimates.
+  Uncertainty estimation via bootstrap resampling is supported.
 - **Synthetic catalog generation** via analytic inverse-CDF sampling.
 - **Photometric filter selection** utilities.
 

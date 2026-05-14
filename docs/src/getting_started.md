@@ -207,7 +207,7 @@ see below. The [Sobel filter](@ref "Sobel Edge-Detection Filter")
 
 ```@example
 # Pure Sobel (no pre-smoothing) — fast, appropriate when errors ≪ bin_width
-result_sobel = sobel_trgb(mags; bin_width=0.1)
+result_sobel = trgb(Sobel(bin_width=0.1), mags)
 println("Sobel TRGB: ", round(result_sobel.m_trgb; digits=3))
 ```
 
@@ -231,13 +231,13 @@ axislegend(ax2, position = :lt)
 fig2
 ```
 
-To prevent such misidentifications, `sobel_trgb` takes a `magnitude_range` keyword argument
+To prevent such misidentifications, `Sobel` takes a `magnitude_range` keyword argument
 that can be used to restrict the range of magnitudes it searches, ensuring it finds the right
 feature:
 
 ```@example
 # Pure Sobel (no pre-smoothing) — fast, appropriate when errors ≪ bin_width
-result_sobel = sobel_trgb(mags; bin_width=0.1, magnitude_range=(23.5,24.5))
+result_sobel = trgb(Sobel(bin_width=0.1, magnitude_range=(23.5, 24.5)), mags)
 println("Sobel TRGB: ", round(result_sobel.m_trgb; digits=3))
 ```
 
@@ -249,8 +249,9 @@ applying the Sobel kernel, acting as a matched filter for photometric-error smea
 using Distributions
 
 # Pre-smooth with a Gaussian matching the typical photometric error near the TRGB
-result_sobel_smooth = sobel_trgb(mags; bin_width=0.1, magnitude_range=(23.5,24.5),
-                                 response=Normal(0, 0.05))
+result_sobel_smooth = trgb(Sobel(bin_width=0.1, magnitude_range=(23.5,24.5),
+                                 response=Normal(0, 0.05)), 
+                           mags)
 println("Sobel (Gaussian pre-smooth) TRGB: ", round(result_sobel_smooth.m_trgb; digits=3))
 ```
 
@@ -273,6 +274,15 @@ axislegend(ax, position = :lt)
 fig
 ```
 
+Finally, we can use [`bootstrap`](@ref) to perform bootstrap resampling of the data to obtain a more robust estimate of the
+TRGB magnitude and an estimate of the uncertainty. Generally all edge detection methods should support bootstrapping with this interface.
+
+```@example
+sobel_samples = bootstrap(Sobel(bin_width=0.1, magnitude_range=(23.5,24.5),
+                          response=Normal(0, 0.05)), mags; n=1000)
+println("Sobel bootstrap estimate: ", round(mean(sobel_samples); digits=3), " ± ", round(std(sobel_samples); digits=3))
+```
+
 ## Edge Detection with GLOESS
 
 The [GLOESS](@ref "GLOESS Smoothing") algorithm [Persson2004](@cite) applies
@@ -281,9 +291,18 @@ Gaussian-windowed locally-weighted smoothing to the histogram before Sobel edge 
 is noisy.
 
 ```@example
-result_gloess = gloess_trgb(mags; bandwidth=0.2, bin_width=0.1, magnitude_range=(23.5,24.5))
+result_gloess = trgb(GLOESS(bandwidth=0.2, bin_width=0.1, magnitude_range=(23.5,24.5)), mags)
 println("GLOESS TRGB: ", round(result_gloess.m_trgb; digits=3))
 ```
+
+And bootstrap resampling is supported here as well:
+
+```@example
+gloess_samples = bootstrap(GLOESS(bandwidth=0.2, bin_width=0.1, 
+                           magnitude_range=(23.5,24.5)), mags; n=1000)
+println("GLOESS bootstrap estimate: ", round(mean(gloess_samples); digits=3), " ± ", round(std(gloess_samples); digits=3))
+```
+
 
 We can overlay all three estimates on the histogram:
 

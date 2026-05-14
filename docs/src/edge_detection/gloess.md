@@ -44,20 +44,18 @@ where ``\sigma_{\rm phot}`` is the typical photometric error near the TRGB.
 
 ## When to use
 
-- **Use GLOESS** instead of the plain Sobel filter when the histogram is noisy
-  (few stars, large photometric errors), or when you want a smoother edge
-  signal to visually inspect.
-- **Prefer the plain Sobel filter** when the sample is large and photometric
-  errors are small, because GLOESS adds minimal benefit and slightly blurs the
-  edge.
-- **Prefer LF fitting** ([`fit`](@ref)) when formal uncertainties are required.
+- GLOESS typically gives better results than [`Sobel`](@ref TRGBDistances.Sobel)
+  (more accurate TRGB magnitude, lower bootstrap uncertainties). GLOESS is our
+  standard recommendation if you are looking for an edge detection method.
+- We prefer LF fitting and sampling ([`fit`](@ref) and [`sample`](@ref))
+  when the TRGB is well-sampled and formal uncertainties are required.
 
 ## API
 
 ```@docs
-TRGBDistances.gloess_trgb
-TRGBDistances.gloess_smooth
+TRGBDistances.GLOESS
 TRGBDistances.GLOESSResult
+TRGBDistances.gloess_smooth
 ```
 
 ## References
