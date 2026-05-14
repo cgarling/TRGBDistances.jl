@@ -20,16 +20,7 @@ Branch (TRGB) standard candle. For measuring TRGB magnitudes, the package implem
   Uncertainty estimation via bootstrap resampling is supported.
 - **Synthetic catalog generation** via analytic inverse-CDF sampling.
 - **Photometric filter selection** utilities.
-
-## Calibrations
-
-We also have a library of TRGB calibrations that allow conversion from observed
-TRGB magnitude to distance in various filters:
-
-```@docs
-TRGBDistances.Rizzi2007
-TRGBDistances.Fusco2012
-```
+- **Calibrations** of the TRGB absolute magnitude from the literature [here](@ref calibrations).
 
 ## Utilities
 
@@ -46,10 +37,11 @@ TRGBDistances.filter_mags
 Pages = [
     "getting_started.md",
     "lf_modeling/theory.md",
+    "lf_modeling/implementation.md",
     "edge_detection/index.md",
     "edge_detection/sobel.md",
     "edge_detection/gloess.md",
-    "dev/makarov_audit.md",
+    "calibrations.md",
 ]
 Depth = 2
 ```
