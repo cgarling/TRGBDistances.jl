@@ -10,13 +10,12 @@ import Random
 
 include("calibrations.jl")
 include("utilities.jl")
-include("luminosity_function.jl")
-include("fitting.jl")
-include("sampling.jl")
+include("luminosity_functions/luminosity_function.jl")
+include("luminosity_functions/fitting.jl")
+include("luminosity_functions/sampling.jl")
+include("edge_detection/sobel.jl")
+include("edge_detection/gloess.jl")
 include("simulation.jl")
-include("sobel.jl")
-include("gloess.jl")
-
 
 export BrokenPowerLaw, fit, sample, observe, filter_mags, sobel_trgb, gloess_trgb, Rizzi2007, Fusco2012
 export OptimJL, KissMCMCJL, DynamicHMCJL, AdvancedMHJL, AffineInvariantMCMCJL # export backends

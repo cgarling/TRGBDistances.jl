@@ -89,14 +89,12 @@ chain = sample(BrokenPowerLaw, mags, err, compl, bias, x0;
                prior=prior, backend=KissMCMCJL(nsamples=50_000))
 ```
 """
-struct KissMCMCJL <: AbstractSamplerBackend
-    nsamples::Int
-    nburnin::Int
-    nwalkers::Union{Int, Nothing}
-    nthin::Int
+Base.@kwdef struct KissMCMCJL <: AbstractSamplerBackend
+    nsamples::Int = 10_000
+    nburnin::Int = 1_000
+    nwalkers::Union{Int, Nothing} = nothing
+    nthin::Int = 1
 end
-KissMCMCJL(; nsamples=10_000, nburnin=1_000, nwalkers=nothing, nthin=1) =
-    KissMCMCJL(nsamples, nburnin, nwalkers, nthin)
 
 """
     DynamicHMCJL(; nsamples=1000, n_warmup=500, ad=ADTypes.AutoForwardDiff())
@@ -116,13 +114,11 @@ chain = sample(BrokenPowerLaw, mags, err, compl, bias, x0;
                prior=prior, backend=DynamicHMCJL(nsamples=1000, ad=ADTypes.AutoForwardDiff()))
 ```
 """
-struct DynamicHMCJL <: AbstractSamplerBackend
-    nsamples::Int
-    n_warmup::Int
-    ad::Union{ADTypes.AbstractADType,Nothing}
+Base.@kwdef struct DynamicHMCJL <: AbstractSamplerBackend
+    nsamples::Int = 1000
+    n_warmup::Int = 500
+    ad::Union{ADTypes.AbstractADType,Nothing} = ADTypes.AutoForwardDiff()
 end
-DynamicHMCJL(; nsamples=1000, n_warmup=500, ad=ADTypes.AutoForwardDiff()) =
-    DynamicHMCJL(nsamples, n_warmup, ad)
 
 """
     AdvancedMHJL(; nsamples=10_000, nburnin=1_000, nwalkers=1, 
@@ -152,17 +148,15 @@ chain = sample(BrokenPowerLaw, mags, err, compl, bias, x0;
                prior=prior, backend=AdvancedMHJL(nsamples=10_000, proposal_scale=0.01))
 ```
 """
-struct AdvancedMHJL{M} <: AbstractSamplerBackend
-    nsamples::Int
-    nburnin::Int
-    nwalkers::Int
-    proposal_scale::Float64
-    nthin::Int
-    parallel::M
-    progress::Bool
+Base.@kwdef struct AdvancedMHJL{M} <: AbstractSamplerBackend
+    nsamples::Int = 10_000
+    nburnin::Int = 1_000
+    nwalkers::Int = 1
+    proposal_scale::Float64 = 0.01
+    nthin::Int = 1
+    parallel::M = nothing
+    progress::Bool = false
 end
-AdvancedMHJL(; nsamples=10_000, nburnin=1_000, nwalkers=1, proposal_scale=0.01, nthin=1, parallel=nothing, progress=false) =
-    AdvancedMHJL(nsamples, nburnin, nwalkers, proposal_scale, nthin, parallel, progress)
 
 """
     AffineInvariantMCMCJL(; nsamples=10_000, nburnin=1_000, nwalkers=nothing, nthin=1)
@@ -186,11 +180,9 @@ chain = sample(BrokenPowerLaw, mags, err, compl, bias, x0;
                prior=prior, backend=AffineInvariantMCMCJL(nsamples=5_000))
 ```
 """
-struct AffineInvariantMCMCJL <: AbstractSamplerBackend
-    nsamples::Int
-    nburnin::Int
-    nwalkers::Union{Int,Nothing}
-    nthin::Int
+Base.@kwdef struct AffineInvariantMCMCJL <: AbstractSamplerBackend
+    nsamples::Int = 10_000
+    nburnin::Int = 1_000
+    nwalkers::Union{Int,Nothing} = nothing
+    nthin::Int = 1
 end
-AffineInvariantMCMCJL(; nsamples=10_000, nburnin=1_000, nwalkers=nothing, nthin=1) =
-    AffineInvariantMCMCJL(nsamples, nburnin, nwalkers, nthin)

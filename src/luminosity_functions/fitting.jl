@@ -157,12 +157,11 @@ result = fit(BrokenPowerLaw, mags, err, compl, bias, x0;
              backend=OptimJL(method=Optim.NewtonTrustRegion(), ad=ADTypes.AutoForwardDiff()))
 ```
 """
-struct OptimJL{M,O} <: AbstractOptimizerBackend
-    method::M
-    options::O
-    ad::Union{ADTypes.AbstractADType,Nothing}
+Base.@kwdef struct OptimJL{M,O} <: AbstractOptimizerBackend
+    method::M = nothing
+    options::O = nothing
+    ad::Union{ADTypes.AbstractADType,Nothing} = nothing
 end
-OptimJL(; method=nothing, options=nothing, ad=nothing) = OptimJL(method, options, ad)
 
 # -----------------------------------------------------------------------
 # fit() — public API
