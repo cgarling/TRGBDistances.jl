@@ -31,6 +31,7 @@ makedocs(;
             "Sobel Filter" => "edge_detection/sobel.md",
             "GLOESS" => "edge_detection/gloess.md",
         ],
+        "Calibrations" => "calibrations.md",
         "References" => "refs.md",
         "Index" => "doc_index.md",
     ],

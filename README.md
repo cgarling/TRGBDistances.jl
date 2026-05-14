@@ -39,7 +39,7 @@ the **Tip of the Red Giant Branch** (TRGB) standard candle.
     improving robustness for noisy histograms.
 - **Synthetic catalog generation** using an analytic inverse-CDF sampler.
 - **Photometric calibrations** for converting measured TRGB magnitudes
-  into distances(Rizzi et al. 2007, Fusco et al. 2012).
+  into distances (e.g., Rizzi et al. 2007).
 - **Color-cut utilities** for selecting RGB stars from a CMD.
 
 ## Installation

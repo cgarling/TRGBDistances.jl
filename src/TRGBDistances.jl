@@ -35,7 +35,7 @@ include("edge_detection/gloess.jl")
 include("edge_detection/bootstrap.jl")
 include("simulation.jl")
 
-export BrokenPowerLaw, fit, sample, observe, filter_mags, Sobel, GLOESS, bootstrap, trgb, Rizzi2007, Fusco2012
+export BrokenPowerLaw, fit, sample, observe, filter_mags, Sobel, GLOESS, bootstrap, trgb
 export OptimJL, KissMCMCJL, DynamicHMCJL, AdvancedMHJL, AffineInvariantMCMCJL # export backends
 
 """
