@@ -232,11 +232,10 @@ end
     σ = err_func(x)
     μ = x + bias_func(x)
     z = (m - μ) / σ
-    gauss = exp(-z^2 / 2) / σ / sqrt2π  # σ * √(2π)
+    gauss = exp(-z^2 / 2) / σ / sqrt2π
     return ψ(model, x) * gauss * complete_func(x)
 end
 
-_g(m, μ, σ) = exp(-0.5 * ((m - μ) / σ)^2) / (σ * sqrt2π)
 """
     ϕ_norm(limits, model, err_func, complete_func, bias_func; int_width=1.0)
 
