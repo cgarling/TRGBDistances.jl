@@ -82,29 +82,7 @@ function quantile(model::BrokenPowerLaw, p; upper_limit=10.0)
         return m_trgb + log10(inner) / a
     end
 end
-# function quantile(model::BrokenPowerLaw, p; upper_limit=10.0)
-#     (; m_trgb, a, b, c) = model
-#     total = _cdf_unnorm_total(model; upper_limit)
-#     p_unnorm = p * total  # target unnormalized CDF value
 
-#     # Contribution from AGB side
-#     agb_total = c > 0 ? inv(c * logten) : zero(p)
-
-#     if p_unnorm <= agb_total
-#         # On AGB side: p_unnorm = 10^(c*(m - m_trgb)) / (c * logten)
-#         # ⟹ m = m_trgb + log10(p_unnorm * c * logten) / c
-#         return m_trgb + log10(p_unnorm * c * logten) / c
-#     else
-#         # On RGB side: p_unnorm = agb_total + 10^b * (10^(a*(m-m_trgb)) - 1) / (a * logten)
-#         # ⟹ 10^(a*(m-m_trgb)) = 1 + (p_unnorm - agb_total) * a * logten / 10^b
-#         # ⟹ m = m_trgb + log10(1 + (p_unnorm - agb_total) * a * logten / 10^b) / a
-#         if a ≤ 0
-#             return m_trgb  # degenerate case
-#         end
-#         inner = 1 + (p_unnorm - agb_total) * a * logten / exp10(b)
-#         return m_trgb + log10(max(inner, 0.0)) / a
-#     end
-# end
 
 # -----------------------------------------------------------------------
 # Random sampling via inverse-CDF

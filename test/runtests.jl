@@ -15,8 +15,6 @@ doctest(TRGBDistances)
 # -----------------------------------------------------------------------
 # Helpers
 # -----------------------------------------------------------------------
-# const err_func      = m -> 0.05
-# const complete_func = m -> 1.0
 const err_func      = x -> exp_photerr(x, 1.05, 10.0, 32.0, 0.01)
 const complete_func = x -> Martin2016_complete(x, 1.0, 26.0, 0.3)
 const bias_func     = m -> 0.0

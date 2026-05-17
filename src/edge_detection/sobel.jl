@@ -38,8 +38,7 @@ returning a [`SobelResult`](@ref TRGBDistances.SobelResult).
 The stars are binned into a histogram of width `bin_width` (in magnitudes).
 If `response` is a [`Distributions.UnivariateDistribution`](https://juliastats.org/Distributions.jl/stable/univariate/),
 the histogram of stellar magnitudes is first convolved with the
-distribution's probability density
-function before the Sobel kernel is applied.  This generalised pre-smoothing,
+probability density function before the Sobel kernel is applied.  This generalised pre-smoothing,
 described in [Sakai1996](@cite), acts as a matched filter for a TRGB edge
 smeared by photometric errors; a `Normal(0, σ)` with `σ` equal to the typical
 photometric error near the TRGB is a natural choice.  With `response=nothing`
@@ -116,18 +115,8 @@ function sobel_trgb(mags; bin_width=0.1, response=nothing, magnitude_range=nothi
         Float64(magnitude_range[1]), Float64(magnitude_range[2])
     end
 
-    # Build bin edges and centers
-    n_bins = max(3, ceil(Int, (m_max - m_min) / bin_width))
-    bin_centers = [m_min + (i - 0.5) * bin_width for i in 1:n_bins]
-
-    # Populate histogram
-    counts = zeros(Int, n_bins)
-    for m in mags
-        idx = floor(Int, (m - m_min) / bin_width) + 1
-        if 1 <= idx <= n_bins
-            counts[idx] += 1
-        end
-    end
+    counts, bin_centers = _build_histogram(mags, m_min, m_max, bin_width)
+    n_bins = length(bin_centers)
 
     # Optional pre-smoothing with response distribution
     data = if response !== nothing
@@ -170,14 +159,21 @@ function _convolve_histogram(counts::AbstractVector,
     T = promote_type(eltype(counts), eltype(bin_centers), eltype(pdf(d, zero(eltype(bin_centers)))))
     n = length(bin_centers)
     out = zeros(T, n)
+    σ = try std(d)
+    catch
+        nothing
+    end
+    trunc = if !isnothing(σ)
+        max(1, ceil(Int, 6 * σ / (bin_centers[2] - bin_centers[1])))
+    else
+        n  # no truncation available
+    end
     for i in 1:n
-        for j in 1:n
+        for j in max(1, i-trunc):min(n, i+trunc)
             out[i] += counts[j] * pdf(d, bin_centers[i] - bin_centers[j])
         end
     end
     if renorm
-        # Δx = bin_centers[2] - bin_centers[1] # Assume uniform binning
-        # out .*= Δx  # Renormalize to preserve total counts
         out .*= sum(counts) / sum(out)  # Renormalize to preserve total counts
     end
     return out

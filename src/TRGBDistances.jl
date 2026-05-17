@@ -1,7 +1,7 @@
 module TRGBDistances
 
 import ADTypes
-using Distributions: pdf, logpdf, cdf, Normal
+using Distributions: pdf, logpdf, Normal, std
 using QuadGK: quadgk
 using Interpolations: linear_interpolation
 using SpecialFunctions: erf
@@ -47,8 +47,10 @@ defined by `ridge_colors` and `ridge_mags`. The selection region is defined by t
 between `± func(m)` of the ridgeline.
 """
 function filter_mags(colors, mags, ridge_colors, ridge_mags, func)
-    pidx = sortperm(ridge_mags)
-    ridge_colors, ridge_mags = ridge_colors[pidx], ridge_mags[pidx]
+    if !issorted(ridge_mags)
+        pidx = sortperm(ridge_mags)
+        ridge_colors, ridge_mags = ridge_colors[pidx], ridge_mags[pidx]
+    end
     color_itp = linear_interpolation(ridge_mags, ridge_colors; extrapolation_bc=Inf)
     idx = Int64[]
     for i in eachindex(colors, mags)

@@ -158,10 +158,12 @@ function gloess_smooth(counts::AbstractVector, bin_centers::AbstractVector; band
     n = length(bin_centers)
     smoothed = zeros(Float64, n)
     h2 = 2 * bandwidth^2
+    # Truncate the kernel at 6σ to avoid unnecessary computation in the tails
+    trunc = max(1, ceil(Int, 6 * bandwidth / (bin_centers[2] - bin_centers[1])))
     for i in 1:n
         wsum = 0.0
         nsum = 0.0
-        for j in 1:n
+        for j in max(1, i-trunc):min(n, i+trunc)
             w = exp(-(bin_centers[i] - bin_centers[j])^2 / h2)
             wsum += w
             nsum += w * counts[j]
@@ -183,18 +185,8 @@ function gloess_trgb(mags; bandwidth=0.2, bin_width=0.1, magnitude_range=nothing
         Float64(magnitude_range[1]), Float64(magnitude_range[2])
     end
 
-    # Build bin edges and centers
-    n_bins = max(3, ceil(Int, (m_max - m_min) / bin_width))
-    bin_centers = [m_min + (i - 0.5) * bin_width for i in 1:n_bins]
-
-    # Populate histogram
-    counts = zeros(Int, n_bins)
-    for m in mags
-        idx = floor(Int, (m - m_min) / bin_width) + 1
-        if 1 <= idx <= n_bins
-            counts[idx] += 1
-        end
-    end
+    counts, bin_centers = _build_histogram(mags, m_min, m_max, bin_width)
+    n_bins = length(bin_centers)
 
     # GLOESS smoothing
     smoothed = gloess_smooth(counts, bin_centers; bandwidth)
