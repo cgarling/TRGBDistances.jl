@@ -5,4 +5,4 @@
 /Manifest*.toml
 /docs/Manifest*.toml
 /docs/build/
-/bench/Manifest*.toml
+/benchmark/Manifest*.toml
