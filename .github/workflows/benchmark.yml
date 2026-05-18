@@ -12,4 +12,4 @@ jobs:
         with:
           julia-version: '1'
           job-summary: 'true'
-          extra-pkgs: 'PrettyTables, Distributions, LinearAlgebra, Random'
+          extra-pkgs: 'PrettyTables,Distributions,LinearAlgebra,Random'
