@@ -3,6 +3,28 @@ using BenchmarkTools
 using Distributions: Normal
 using LinearAlgebra: BLAS
 using Random: Xoshiro
+using PrettyTables
+
+function show_benchmarks(results)
+    # Collect results
+    sorted  = sort(collect(results), by=first)
+    names   = [k for (k,_) in sorted]
+    trials  = [v for (_,v) in sorted]
+
+    # Pack into matrix
+    data = hcat(
+        names,
+        [BenchmarkTools.prettytime(median(t).time) for t in trials],
+        [BenchmarkTools.prettymemory(median(t).memory) for t in trials],
+        [median(t).allocs for t in trials]
+    )
+
+    # Make pretty table
+    pretty_table(data;
+        column_labels = ["Benchmark", "Median Time", "Memory", "Allocs"],
+        alignment     = [:l, :r, :r, :r]
+    )
+end
 
 BLAS.set_num_threads(1)
 
@@ -36,7 +58,6 @@ SUITE["core"]["loglikelihood_fixed"] = @benchmarkable TRGBDistances.loglikelihoo
 SUITE["core"]["old_norm"] = @benchmarkable TRGBDistances.quadgk(m -> TRGBDistances.ϕ(m, $model, $err_func, $complete_func, $bias_func), $limits...)[1]
 
 
-
 ######################################################
 # Problem-size-specific benchmarks for edge detection
 SUITE["sobel"] = BenchmarkGroup()
@@ -51,4 +72,17 @@ for (i, width) in enumerate(bin_widths)
         SUITE["sobel"]["trgb"]["bin_width=$(width)_mag_range=$(mag_range[2]-mag_range[1])"] = @benchmarkable TRGBDistances.trgb(TRGBDistances.Sobel(bin_width=$width, magnitude_range=$mag_range, response=Normal(0, $width)), $mags)
         SUITE["gloess"]["trgb"]["bandwidth=$(width)_bin_width=$(width)_mag_range=$(mag_range[2]-mag_range[1])"] = @benchmarkable TRGBDistances.trgb(TRGBDistances.GLOESS(bandwidth=$width, bin_width=$width, magnitude_range=$mag_range), $mags)
     end
+end
+
+# If not on CI, we'll show a nice table
+if get(ENV, "CI", "false") == "false"
+    # Run the benchmarks
+    results = run(SUITE, verbose=true)
+
+    println("⎯⎯⎯ Core Suite ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯")
+    show_benchmarks(results["core"])
+    println("⎯⎯⎯ Sobel Suite ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯")
+    show_benchmarks(results["sobel"]["trgb"])
+    println("⎯⎯⎯ GLOESS Suite ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯")
+    show_benchmarks(results["gloess"]["trgb"])
 end
